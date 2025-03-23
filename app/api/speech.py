@@ -1,7 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Body
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from services.speech_service import SpeechService
 import logging
-from typing import Dict, Any
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

@@ -431,33 +431,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show processing state
         recordingStatus.textContent = 'Processing...';
         
-        // Prepare API request data
-        const requestData = {
-            audio_data: base64Audio,
-            resident_id: null  // Add resident ID if selected
-        };
-        
-        // Add table number if selected
-        if (selectedTable && selectedTable.dataset && selectedTable.dataset.id) {
-            requestData.table_id = parseInt(selectedTable.dataset.id);
-        } else {
-            // Default to table 1 if none selected
-            requestData.table_id = 1;
+        // Convert base64 back to a Blob for the new API
+        const binaryString = atob(base64Audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
         }
+        const audioBlob = new Blob([bytes], { type: 'audio/webm' });
         
-        console.log('Sending audio data of length:', base64Audio.length);
+        // Create a FormData object to send the file
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'recording.webm');
         
-        // Send to API for processing
-        fetch('/api/orders/voice', {
+        console.log('Sending audio data to transcription service');
+        
+        // First, get transcription from our new speech service
+        fetch('/api/speech/transcribe', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestData)
+            body: formData
         })
         .then(response => {
             if (!response.ok) {
-                // Parse the error response
                 return response.json().then(err => {
                     console.error('API Error:', err);
                     throw new Error(err.detail || 'Network response was not ok');
@@ -465,14 +459,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return response.json();
         })
-        .then(data => {
+        .then(transcriptionData => {
             // Show transcription
             transcriptionContainer.classList.remove('hidden');
-            transcriptionElement.textContent = data.transcription || 'No transcription returned';
+            const transcriptionText = transcriptionData.text || 'No transcription returned';
+            transcriptionElement.textContent = transcriptionText;
             
+            // Add table number if selected
+            let tableId = 1; // Default to table 1
+            if (selectedTable && selectedTable.dataset && selectedTable.dataset.id) {
+                tableId = parseInt(selectedTable.dataset.id);
+            }
+            
+            // Now send transcription to order processing
+            return fetch('/api/orders/process-transcription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    transcription: transcriptionText,
+                    table_id: tableId
+                })
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    console.error('Order Processing Error:', err);
+                    throw new Error(err.detail || 'Network response was not ok');
+                });
+            }
+            return response.json();
+        })
+        .then(orderData => {
             // Show processed order
             processedOrderContainer.classList.remove('hidden');
-            processedOrderElement.textContent = data.processed_order || 'Could not process order';
+            processedOrderElement.textContent = orderData.processed_order || 'Could not process order';
             
             // Update recording status
             recordingStatus.textContent = 'Recording processed successfully';
@@ -481,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmOrderBtn.classList.remove('disabled');
             
             // Store order ID for submission
-            confirmOrderBtn.dataset.orderId = data.order_id;
+            confirmOrderBtn.dataset.orderId = orderData.order_id;
         })
         .catch(error => {
             console.error('Error processing audio:', error);

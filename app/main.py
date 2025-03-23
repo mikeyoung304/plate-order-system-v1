@@ -8,33 +8,26 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import json
-
 # Import API routers
 from api.residents import router as residents_router
 from api.orders import router as orders_router
 from api.floor_plan import router as floor_plan_router
-
+from api.speech import router as speech_router  # Import the new speech router
 # Import database
 from db.database import Base, engine
-
 # Create database tables
 Base.metadata.create_all(bind=engine)
-
 # Load environment variables
 load_dotenv()
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 # Get environment variables
 TEMPLATES_DIR = os.getenv("TEMPLATES_DIR", "templates")
 STATIC_FILES_DIR = os.getenv("STATIC_FILES_DIR", "static")
-
 # Initialize FastAPI app
 app = FastAPI(title="Plate Order System", 
               description="A voice-driven restaurant ordering system with KDS integration")
-
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -43,56 +36,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Mount static files directory
 app.mount("/static", StaticFiles(directory=STATIC_FILES_DIR), name="static")
-
 # Set up templates
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
-
 # Include API routers
 app.include_router(residents_router, prefix="/api")
 app.include_router(orders_router, prefix="/api")
 app.include_router(floor_plan_router, prefix="/api")
-
+app.include_router(speech_router, prefix="/api/speech", tags=["speech"])  # Add the speech router
 # Connected WebSocket clients for KDS real-time updates
 connected_clients = set()
-
 @app.get("/", response_class=HTMLResponse)
 async def get_home_page(request: Request):
     """
     Serve the main application page
     """
     return templates.TemplateResponse("index.html", {"request": request})
-
 @app.get("/kds", response_class=HTMLResponse)
 async def get_kds_page(request: Request):
     """
     Serve the Kitchen Display System page
     """
     return templates.TemplateResponse("kds.html", {"request": request})
-
 @app.get("/floor-plan", response_class=HTMLResponse)
 async def get_floor_plan(request: Request):
     """
     Serve the floor plan management page
     """
     return templates.TemplateResponse("floor-plan.html", {"request": request})
-
 @app.get("/residents", response_class=HTMLResponse)
 async def get_residents_page(request: Request):
     """
     Serve the residents management page
     """
     return templates.TemplateResponse("residents.html", {"request": request})
-
 @app.get("/orders", response_class=HTMLResponse)
 async def get_orders_page(request: Request):
     """
     Serve the orders management page
     """
     return templates.TemplateResponse("orders.html", {"request": request})
-
 @app.websocket("/ws/kds")
 async def websocket_kds(websocket: WebSocket):
     """
@@ -106,7 +90,6 @@ async def websocket_kds(websocket: WebSocket):
             await broadcast_to_clients(data)
     except WebSocketDisconnect:
         connected_clients.remove(websocket)
-
 async def broadcast_to_clients(message):
     """
     Broadcast message to all connected WebSocket clients
@@ -117,7 +100,6 @@ async def broadcast_to_clients(message):
         except Exception as e:
             logger.error(f"Error sending message to WebSocket client: {e}")
             connected_clients.remove(client)
-
 # Health check endpoint
 @app.get("/health")
 async def health_check():
