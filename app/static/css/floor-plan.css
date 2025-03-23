@@ -1,0 +1,245 @@
+/* Floor Plan Styles */
+.floor-plan-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 140px);
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.floor-plan-controls {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--light-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.control-group label {
+    font-weight: 500;
+}
+
+.control-group select, .control-group input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: white;
+}
+
+.floor-plan-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+    background: var(--light-bg);
+    background-image: 
+        linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.floor-plan {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+}
+
+.floor-plan.edit-mode {
+    cursor: move;
+}
+
+/* Table elements */
+.floor-table {
+    position: absolute;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    border: 2px solid transparent;
+}
+
+.floor-table:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.floor-table.selected {
+    border-color: var(--primary-color);
+    z-index: 10;
+}
+
+.table-number {
+    font-weight: 600;
+    color: white;
+}
+
+/* Table types */
+.round-2 {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #9c27b0;
+}
+
+.round-4 {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #3f51b5;
+}
+
+.square-2 {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: #2196f3;
+}
+
+.square-4 {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background: #009688;
+}
+
+.rect-4 {
+    width: 100px;
+    height: 70px;
+    border-radius: 8px;
+    background: #4caf50;
+}
+
+.rect-6 {
+    width: 140px;
+    height: 70px;
+    border-radius: 8px;
+    background: #ff9800;
+}
+
+.rect-8 {
+    width: 180px;
+    height: 70px;
+    border-radius: 8px;
+    background: #795548;
+}
+
+/* Table statuses */
+.floor-table.available {
+    opacity: 0.8;
+}
+
+.floor-table.occupied {
+    opacity: 1;
+    border: 2px solid var(--warning-color);
+}
+
+.floor-table.order-in-progress {
+    opacity: 1;
+    border: 2px solid var(--primary-color);
+    animation: pulse 2s infinite;
+}
+
+.floor-table.order-ready {
+    opacity: 1;
+    border: 2px solid var(--success-color);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+/* Legend */
+.floor-plan-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px;
+    background: white;
+    border-top: 1px solid var(--border-color);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.table-status {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.table-status.available {
+    background-color: var(--light-text);
+    opacity: 0.6;
+}
+
+.table-status.occupied {
+    background-color: var(--warning-color);
+}
+
+.table-status.order-in-progress {
+    background-color: var(--primary-color);
+}
+
+.table-status.order-ready {
+    background-color: var(--success-color);
+}
+
+/* Table modal status colors */
+#selected-table-status {
+    font-weight: 500;
+}
+
+#selected-table-status.available {
+    color: var(--light-text);
+}
+
+#selected-table-status.occupied {
+    color: var(--warning-color);
+}
+
+#selected-table-status.order-in-progress {
+    color: var(--primary-color);
+}
+
+#selected-table-status.order-ready {
+    color: var(--success-color);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .floor-plan-controls {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .control-group {
+        width: 100%;
+    }
+    
+    .floor-plan-legend {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+}

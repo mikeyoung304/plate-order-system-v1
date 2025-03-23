@@ -1,0 +1,42 @@
+# FastAPI and ASGI server
+fastapi==0.103.1
+uvicorn==0.23.2
+gunicorn==21.2.0
+
+# Environment and configuration
+python-dotenv==1.0.0
+pydantic==2.3.0
+
+# Database
+sqlalchemy==2.0.20
+alembic==1.12.0
+psycopg2-binary==2.9.7  # PostgreSQL adapter
+
+# Authentication and security
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==4.0.1
+python-multipart==0.0.6
+
+# Web and API
+websockets==11.0.3
+httpx==0.24.1
+aiofiles==23.1.0
+jinja2==3.1.2
+itsdangerous==2.1.2
+
+# Processing and utilities
+requests==2.31.0
+numpy==1.25.2
+pandas==2.1.0
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.0
+pytest-asyncio==0.21.1
+
+# Speech to text (for production)
+openai==0.28.0
+
+# Monitoring and logging
+prometheus-client==0.17.1
