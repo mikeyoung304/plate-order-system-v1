@@ -1,1 +1,8 @@
-OPENAI_API_KEY = "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"
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key from environment variables
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
