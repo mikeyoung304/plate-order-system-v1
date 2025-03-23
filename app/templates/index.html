@@ -3,150 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plate Order System</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Plate - Voice Ordering & KDS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/plate-ui.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar">
-            <div class="logo">Plate</div>
-            <nav>
-                <ul>
-                    <li class="active"><a href="/"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
-                    <li><a href="/floor-plan"><i class="fas fa-map"></i> <span>Floor Plan</span></a></li>
-                    <li><a href="/orders"><i class="fas fa-utensils"></i> <span>Orders</span></a></li>
-                    <li><a href="/residents"><i class="fas fa-users"></i> <span>Residents</span></a></li>
-                    <li><a href="/kds"><i class="fas fa-tv"></i> <span>Kitchen Display</span></a></li>
-                </ul>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <header>
-                <h1>Dashboard</h1>
-                <div class="header-actions">
-                    <button id="voice-order-btn" class="btn btn-primary">
-                        <i class="fas fa-microphone"></i> New Voice Order
-                    </button>
-                    <button id="manual-order-btn" class="btn">
-                        <i class="fas fa-clipboard"></i> Manual Order
-                    </button>
-                </div>
-            </header>
-
-            <!-- Dashboard Stats -->
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-utensils"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Active Orders</h3>
-                        <p id="active-orders-count">0</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Avg. Preparation Time</h3>
-                        <p id="avg-prep-time">0 min</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Residents</h3>
-                        <p id="residents-count">0</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Completed Today</h3>
-                        <p id="completed-orders-count">0</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Orders -->
-            <div class="recent-orders-section">
-                <h2>Recent Orders</h2>
-                <div id="recent-orders" class="order-grid">
-                    <!-- Orders will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <!-- Quick Order Section -->
-            <div class="quick-order-section">
-                <h2>Quick Order</h2>
-                <div class="quick-order">
-                    <select id="quick-table" class="form-select">
-                        <option value="">Select Table</option>
-                        <!-- Tables will be populated by JavaScript -->
-                    </select>
-                    <input type="text" id="quick-input" placeholder="Type order details...">
-                    <button id="quick-submit" class="btn">Submit</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- KDS Panel -->
-        <div class="kds-panel">
-            <h2>Kitchen Display</h2>
-            <div class="kds-summary">
-                <p><strong>Pending:</strong> <span id="kds-pending-count">0</span></p>
-                <p><strong>In Progress:</strong> <span id="kds-inprogress-count">0</span></p>
-                <p><strong>Ready:</strong> <span id="kds-ready-count">0</span></p>
-            </div>
-            <div class="kds-items" id="kds-items">
-                <!-- KDS items will be populated by JavaScript -->
-            </div>
-            <a href="/kds" class="btn btn-full">Full Kitchen Display</a>
-        </div>
+    <div class="container">
+        <!-- Header with Logo and User Info -->
+        <header>
+            <img src="#" alt="Plate" class="logo" id="logo">
+            <!-- Rest of the HTML code... -->
+        </header>
+        <!-- More HTML content... -->
     </div>
-
-    <!-- Voice Order Modal -->
-    <div id="voice-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Voice Order</h2>
-            <div class="voice-order-container">
-                <div id="recording-status" class="recording-status">Press the button to start recording</div>
-                <div class="recording-visualizer">
-                    <canvas id="visualizer" height="60"></canvas>
-                </div>
-                <div class="voice-controls">
-                    <button id="start-recording" class="btn btn-circle">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <button id="stop-recording" class="btn btn-circle hidden">
-                        <i class="fas fa-stop"></i>
-                    </button>
-                </div>
-                <div id="transcription-container" class="transcription-container hidden">
-                    <h3>Transcription</h3>
-                    <p id="transcription"></p>
-                </div>
-                <div id="processed-order-container" class="processed-order-container hidden">
-                    <h3>Processed Order</h3>
-                    <p id="processed-order"></p>
-                </div>
-                <div class="modal-actions">
-                    <button id="confirm-order" class="btn btn-primary disabled">Confirm Order</button>
-                    <button id="cancel-order" class="btn btn-secondary">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/js/main.js"></script>
+    <script src="{{ url_for('static', filename='js/plate-ui.js') }}"></script>
 </body>
 </html>
