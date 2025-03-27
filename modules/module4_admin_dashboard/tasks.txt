@@ -1,0 +1,11 @@
+# Module 4: Admin Dashboard for Computer Access
+# Each line represents a task to be executed in order
+
+create_admin_view_template
+create_admin_view_css
+implement_analytics_dashboard_component
+implement_order_management_component
+implement_staff_management_component
+implement_menu_management_component
+implement_admin_view_js
+test_admin_dashboard

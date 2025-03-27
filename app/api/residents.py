@@ -4,9 +4,9 @@ from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from db.database import get_db
-from models.models import Resident, Order
-from api.schemas import ResidentCreate, ResidentUpdate, Resident as ResidentSchema
+from app.db.database import get_db
+from app.models.models import Resident, Order
+from app.api.schemas import ResidentCreate, ResidentUpdate, Resident as ResidentSchema
 
 router = APIRouter(
     prefix="/residents",

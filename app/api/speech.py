@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from services.speech_service import SpeechService
+from app.services.speech_service import SpeechService
 import logging
 
 # Set up logging

@@ -4,21 +4,51 @@ from typing import Optional, List
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import SQLAlchemyError
 import uvicorn
 
+# Import API router
+from app.api import api_router
+from app.api.middleware.error_handler import (
+    validation_exception_handler,
+    sqlalchemy_exception_handler,
+    general_exception_handler
+)
+from app.api.middleware.logging_middleware import logging_middleware
+
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
-app = FastAPI(title="Plate Order System")
+app = FastAPI(
+    title="Plate Order System",
+    description="Voice-enabled ordering system for restaurants",
+    version="1.0.0",
+)
+
+# Add middleware
+@app.middleware("http")
+async def add_logging_middleware(request: Request, call_next):
+    return await logging_middleware(request, call_next)
+
+# Add exception handlers
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 # Mount static files directory
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Templates configuration
 templates = Jinja2Templates(directory="app/templates")
+
+# Include API router
+app.include_router(api_router)
 
 # API key from environment variable
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
@@ -28,7 +58,7 @@ if not OPENAI_API_KEY:
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": "1.0.0"}
 
 # Home page route
 @app.get("/")
@@ -50,35 +80,25 @@ async def kds(request: Request):
 async def orders(request: Request):
     return templates.TemplateResponse("orders.html", {"request": request})
 
-# API models
-class OrderItem(BaseModel):
-    item: str
-    quantity: int
-    notes: Optional[str] = None
+# Residents route
+@app.get("/residents")
+async def residents(request: Request):
+    return templates.TemplateResponse("residents.html", {"request": request})
 
-class Order(BaseModel):
-    table: str
-    items: List[OrderItem]
+# Server view route
+@app.get("/server-view")
+async def server_view(request: Request):
+    return templates.TemplateResponse("server-view.html", {"request": request})
 
-# API endpoint for processing audio - adjust based on your Whisper API implementation
-@app.post("/process_audio")
-async def process_audio(request: Request):
-    try:
-        # Add your Whisper API code here
-        # This is a placeholder for your actual implementation
-        form_data = await request.form()
-        audio_file = form_data.get("audio")
-        
-        # Process with Whisper API
-        # result = your_whisper_api_function(audio_file)
-        
-        # Placeholder response
-        result = "Placeholder transcription"
-        
-        return {"transcription": result}
-    except Exception as e:
-        logger.error(f"Error processing audio: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+# Kitchen view route
+@app.get("/kitchen-view")
+async def kitchen_view(request: Request):
+    return templates.TemplateResponse("kitchen-view.html", {"request": request})
+
+# Admin dashboard route
+@app.get("/admin-view")
+async def admin_view(request: Request):
+    return templates.TemplateResponse("admin-view.html", {"request": request})
 
 # WebSocket connection for real-time updates
 class ConnectionManager:

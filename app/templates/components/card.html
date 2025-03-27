@@ -1,0 +1,11 @@
+<div class="card p-4">
+    <h3 class="text-lg font-semibold mb-2">{{ title }}</h3>
+    <div class="card-content">
+        {{ content|safe }}
+    </div>
+    {% if footer %}
+    <div class="mt-4 pt-3 border-t">
+        {{ footer|safe }}
+    </div>
+    {% endif %}
+</div>

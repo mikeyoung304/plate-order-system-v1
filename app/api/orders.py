@@ -6,10 +6,13 @@ from datetime import datetime, timedelta
 import json
 import logging
 
-from db.database import get_db
-from models.models import Order, OrderStatus
-from api.schemas import OrderCreate, OrderUpdate, Order as OrderSchema, OrderStats, VoiceProcessRequest, VoiceProcessResponse
-from services.speech_service import speech_service
+from app.db.database import get_db
+from app.models.models import Order, OrderStatus
+from app.api.schemas import OrderCreate, OrderUpdate, Order as OrderSchema, OrderStats, VoiceProcessRequest, VoiceProcessResponse
+from app.services.speech_service import SpeechService
+
+# Initialize speech service
+speech_service = SpeechService()
 
 router = APIRouter(
     prefix="/orders",

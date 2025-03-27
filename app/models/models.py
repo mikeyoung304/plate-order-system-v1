@@ -5,7 +5,7 @@ from enum import Enum
 from typing import List, Optional
 from datetime import datetime
 
-from db.database import Base
+from app.db.database import Base
 
 class OrderStatus(str, Enum):
     PENDING = "pending"

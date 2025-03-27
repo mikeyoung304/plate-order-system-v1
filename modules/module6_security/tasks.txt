@@ -1,0 +1,12 @@
+# Module 6: Security Enhancements
+# Each line represents a task to be executed in order
+
+setup_authentication
+implement_jwt_tokens
+implement_role_based_access
+implement_session_management
+implement_input_validation
+implement_input_sanitization
+configure_security_headers
+setup_https
+test_security_features

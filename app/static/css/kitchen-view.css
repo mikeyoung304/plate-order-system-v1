@@ -1,0 +1,11 @@
+/* Kitchen View CSS */
+.kitchen-view {
+    padding: 20px;
+    max-width: 1024px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}

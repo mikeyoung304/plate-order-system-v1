@@ -1,31 +1,32 @@
 import uvicorn
 import os
 import logging
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
-    debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
-    app_env = os.getenv("APP_ENV", "development")
+    # Get port from environment variable or use default
+    port = int(os.environ.get("PORT", 8000))
     
-    logger.info(f"Starting server on port {port} in {app_env} mode")
+    # Get environment
+    env = os.environ.get("ENVIRONMENT", "development")
     
-    # Determine reload setting based on environment
-    reload = app_env == "development"
+    # Log startup info
+    logger.info(f"Starting server on port {port} in {env} mode")
     
-    # Start the application
+    # Set reload based on environment
+    reload = env == "development"
+    
+    # Run the app
     uvicorn.run(
         "main:app", 
         host="0.0.0.0", 
         port=port, 
         reload=reload,
-        log_level="info",
-        workers=1
+        log_level="info"
     )

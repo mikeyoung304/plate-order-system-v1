@@ -4,9 +4,9 @@ from typing import List
 import json
 import logging
 
-from db.database import get_db
-from models.models import Table
-from api.schemas import TableCreate, TableUpdate, Table as TableSchema
+from app.db.database import get_db
+from app.models.models import Table
+from app.api.schemas import TableCreate, TableUpdate, Table as TableSchema
 
 router = APIRouter(
     prefix="/floor-plan",
