@@ -10,6 +10,8 @@ import uvicorn
 
 # Import API router
 from app.api import api_router
+from app.api import admin
+from app.api import websocket
 from app.api.middleware.error_handler import (
     validation_exception_handler,
     sqlalchemy_exception_handler,
@@ -49,6 +51,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Include API router
 app.include_router(api_router)
+app.include_router(websocket.router)
+app.include_router(admin.router)
 
 # API key from environment variable
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
@@ -65,12 +69,27 @@ async def health_check():
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Floor plan route
+# Server view route
+@app.get("/server-view")
+async def server_view(request: Request):
+    return templates.TemplateResponse("server-view.html", {"request": request})
+
+# Kitchen view route
+@app.get("/kitchen-view")
+async def kitchen_view(request: Request):
+    return templates.TemplateResponse("kitchen-view.html", {"request": request})
+
+# Admin view route
+@app.get("/admin-view")
+async def admin_view(request: Request):
+    return templates.TemplateResponse("admin-view.html", {"request": request})
+
+# Floor plan route (legacy)
 @app.get("/floor-plan")
 async def floor_plan(request: Request):
     return templates.TemplateResponse("floor-plan.html", {"request": request})
 
-# KDS route
+# KDS route (legacy)
 @app.get("/kds")
 async def kds(request: Request):
     return templates.TemplateResponse("kds.html", {"request": request})

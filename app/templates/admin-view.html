@@ -3,50 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Plate Order System</title>
+    <title>Admin View - Plate Order System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .card:hover { transform: translateY(-2px); }
+        .btn { transition: all 0.2s ease; }
+        .btn:hover { transform: translateY(-1px); }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="min-h-screen flex flex-col">
-        <header class="bg-indigo-600 text-white shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 py-6">
-                <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+<body class="min-h-screen bg-gray-50">
+    <!-- Header with Navigation -->
+    <header class="bg-purple-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Admin View</h1>
+            <div class="flex space-x-4">
+                <a href="/" class="bg-white text-purple-600 px-4 py-2 rounded-md font-medium hover:bg-purple-50">
+                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Home
+                </a>
+                <div class="relative">
+                    <button id="view-switcher-toggle" class="bg-white text-purple-600 px-4 py-2 rounded-md font-medium hover:bg-purple-50">
+                        <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        Switch View
+                    </button>
+                    <div id="view-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden z-10">
+                        <a href="/server-view" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Server View</a>
+                        <a href="/kitchen-view" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Kitchen View</a>
+                        <a href="/admin-view" class="block px-4 py-2 text-purple-600 bg-purple-50">Admin View</a>
+                    </div>
+                </div>
             </div>
-        </header>
+        </div>
         
-        <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Admin Navigation Tabs -->
+        <div class="bg-purple-700">
+            <div class="max-w-7xl mx-auto px-4">
+                <nav class="flex space-x-4 overflow-x-auto">
+                    <a href="#" class="text-white px-3 py-2 font-medium border-b-2 border-white">Dashboard</a>
+                    <a href="#" class="text-purple-200 hover:text-white px-3 py-2 font-medium border-b-2 border-transparent hover:border-purple-200">Orders</a>
+                    <a href="#" class="text-purple-200 hover:text-white px-3 py-2 font-medium border-b-2 border-transparent hover:border-purple-200">Menu</a>
+                    <a href="#" class="text-purple-200 hover:text-white px-3 py-2 font-medium border-b-2 border-transparent hover:border-purple-200">Staff</a>
+                    <a href="#" class="text-purple-200 hover:text-white px-3 py-2 font-medium border-b-2 border-transparent hover:border-purple-200">Residents</a>
+                    <a href="#" class="text-purple-200 hover:text-white px-3 py-2 font-medium border-b-2 border-transparent hover:border-purple-200">Settings</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Dashboard</h2>
+            
+            <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm font-medium mb-2">Total Orders Today</h3>
-                    <div class="text-3xl font-bold text-gray-900">42</div>
+                <div class="card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-indigo-100 text-indigo-500 mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Orders Today</p>
+                            <p class="text-2xl font-bold text-gray-800">24</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm font-medium mb-2">Average Prep Time</h3>
-                    <div class="text-3xl font-bold text-gray-900">18.5 min</div>
+                <div class="card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Revenue Today</p>
+                            <p class="text-2xl font-bold text-gray-800">$1,254</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm font-medium mb-2">Active Tables</h3>
-                    <div class="text-3xl font-bold text-gray-900">8 / 12</div>
+                <div class="card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Avg. Preparation Time</p>
+                            <p class="text-2xl font-bold text-gray-800">12 min</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-gray-500 text-sm font-medium mb-2">Residents Served</h3>
-                    <div class="text-3xl font-bold text-gray-900">36</div>
+                <div class="card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100 text-red-500 mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Flagged Orders</p>
+                            <p class="text-2xl font-bold text-gray-800">2</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow mb-8">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-medium text-gray-900">Recent Orders</h2>
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Orders by Hour</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+                            <p class="text-gray-500">Chart will be displayed here</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-6">
+                
+                <div class="card bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Popular Items</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+                            <p class="text-gray-500">Chart will be displayed here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Orders -->
+            <div class="card bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Recent Orders</h3>
+                    <button class="text-purple-600 hover:text-purple-800 font-medium">View All</button>
+                </div>
+                <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead>
                             <tr>
                                 <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
                                 <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Table</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
                                 <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
                                 <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -56,38 +170,108 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#1001</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Table 3</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        3 items
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Ready
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10:15 AM</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <button class="text-indigo-600 hover:text-indigo-900">View</button>
+                                    <button class="text-indigo-600 hover:text-indigo-900 mr-2">View</button>
+                                    <button class="text-red-600 hover:text-red-900">Cancel</button>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#1002</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Table 5</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        2 items
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">In Progress</span>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        In Progress
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10:32 AM</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <button class="text-indigo-600 hover:text-indigo-900">View</button>
+                                    <button class="text-indigo-600 hover:text-indigo-900 mr-2">View</button>
+                                    <button class="text-red-600 hover:text-red-900">Cancel</button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </main>
-        
-        <footer class="bg-white border-t border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 py-6">
-                <p class="text-center text-gray-500 text-sm">
-                    &copy; 2025 Plate Order System. All rights reserved.
-                </p>
+        </div>
+    </main>
+    
+    <footer class="bg-white mt-12 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="text-center text-gray-500 text-sm">
+                &copy; 2025 Plate Order System. All rights reserved.
             </div>
-        </footer>
-    </div>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin View loaded');
+            
+            // View switcher toggle
+            const viewSwitcherToggle = document.getElementById('view-switcher-toggle');
+            const viewMenu = document.getElementById('view-menu');
+            
+            viewSwitcherToggle.addEventListener('click', function() {
+                viewMenu.classList.toggle('hidden');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!viewSwitcherToggle.contains(event.target) && !viewMenu.contains(event.target)) {
+                    viewMenu.classList.add('hidden');
+                }
+            });
+            
+            // Tab navigation
+            const navLinks = document.querySelectorAll('nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => {
+                        l.classList.remove('text-white', 'border-white');
+                        l.classList.add('text-purple-200', 'border-transparent', 'hover:text-white', 'hover:border-purple-200');
+                    });
+                    
+                    // Add active class to clicked link
+                    this.classList.remove('text-purple-200', 'border-transparent', 'hover:text-white', 'hover:border-purple-200');
+                    this.classList.add('text-white', 'border-white');
+                    
+                    // Here you would normally load the content for the selected tab
+                    alert(`Navigating to ${this.textContent} tab`);
+                });
+            });
+            
+            // Action buttons
+            const actionButtons = document.querySelectorAll('table button');
+            actionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.textContent.trim();
+                    const row = this.closest('tr');
+                    const orderId = row.querySelector('td:first-child').textContent;
+                    
+                    alert(`Action: ${action} for ${orderId}`);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
