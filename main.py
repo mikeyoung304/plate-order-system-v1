@@ -8,8 +8,9 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 import uvicorn
 
-# Import API router
-from app.api import api_router
+# Import API routers
+from app.api import api_router # For REST APIs
+from app.api.listen import router as listen_router # For WebSocket
 from app.api.middleware.error_handler import (
     validation_exception_handler,
     sqlalchemy_exception_handler,
@@ -47,8 +48,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Templates configuration
 templates = Jinja2Templates(directory="app/templates")
 
-# Include API router
-app.include_router(api_router)
+# Include API routers
+app.include_router(api_router) # REST APIs
+app.include_router(listen_router) # WebSocket for Deepgram
 
 # API key from environment variable
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')

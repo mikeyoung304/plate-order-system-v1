@@ -10,10 +10,10 @@ window.setupAudioVisualization = function(stream) {
     return;
   }
 
-  // Get the visualization canvas
-  const canvas = document.getElementById('audio-visualizer');
+  // Get the visualization canvas (Note: The HTML creates a canvas *inside* the div)
+  const canvas = document.getElementById('audio-visualizer-canvas'); // Use the correct ID for the canvas element
   if (!canvas) {
-    console.error('Audio visualizer canvas not found');
+    console.error('Audio visualizer canvas element with ID "audio-visualizer-canvas" not found');
     return;
   }
 
@@ -107,9 +107,12 @@ window.stopAudioVisualization = function() {
   window.audioVisualizerData = null;
   
   // Hide the canvas
-  const canvas = document.getElementById('audio-visualizer');
+  const canvas = document.getElementById('audio-visualizer-canvas'); // Use the correct canvas ID
   if (canvas) {
-    canvas.classList.add('hidden');
+    // Also hide the container div if needed
+    const container = document.getElementById('audio-visualizer');
+    if (container) container.classList.add('hidden');
+    
     // Clear canvas
     const canvasCtx = canvas.getContext('2d');
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);

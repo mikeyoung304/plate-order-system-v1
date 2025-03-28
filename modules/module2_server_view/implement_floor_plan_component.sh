@@ -19,26 +19,8 @@ mkdir -p "$FLOOR_PLAN_DIR"
 
 # Create the floor plan component
 echo "Creating floor plan component..."
-cat > "$FLOOR_PLAN_JS" << 'EOF'
-/**
- * Floor Plan Component
- * Handles the visualization and interaction with restaurant tables
- */
-
-export class FloorPlan {
-  constructor(containerId, options = {}) {
-    this.container = document.getElementById(containerId);
-    if (!this.container) {
-      throw new Error(`Container element with id "${containerId}" not found`);
-    }
-    
-    this.options = {
-      tableTypes: {
-        'square-2': { width: 80, height: 80, capacity: 2 },
-        'square-4': { width: 100, height: 100, capacity: 4 },
-        'rectangle-4': { width: 120, height: 80, capacity: 4 },
-        'rectangle-6': { width: 160, height: 80, capacity: 6 },
-        'round-2': { width: 80, height: 80, capacity: 2, isRound: true },
+cat > "$FLOOR
+ty: 2, isRound: true },
         'round-4': { width: 100, height: 100, capacity: 4, isRound: true },
         'round-6': { width: 120, height: 120, capacity: 6, isRound: true },
         'round-8': { width: 140, height: 140, capacity: 8, isRound: true },

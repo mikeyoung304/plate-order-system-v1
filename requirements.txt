@@ -36,7 +36,8 @@ pytest==7.4.0
 pytest-asyncio==0.21.1
 
 # Speech to text (for production)
-openai==0.28.0
+# openai==0.28.0 # Replaced by Deepgram
+deepgram-sdk==2.11.0 # Downgraded to test stability
 
 # Monitoring and logging
 prometheus-client==0.17.1

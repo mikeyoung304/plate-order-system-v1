@@ -400,8 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       
-      // Set up recording completion handler
-      voiceRecorder.setOnRecordingComplete(async (audioData) => {
+      
+      // Set up recording completion handler - now receives audioBlob directly
+      voiceRecorder.setOnRecordingComplete(async (audioBlob) => {
+        console.log('[server-view] setOnRecordingComplete callback started.'); // Log: Start callback
         // Stop audio visualization
         if (typeof window.stopAudioVisualization === 'function') {
           window.stopAudioVisualization();
@@ -409,39 +411,38 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('stopAudioVisualization function not found');
         }
         
-        // Show processing message
-        document.getElementById('record-status').textContent = 'Processing audio...';
+        // Status message already set by VoiceRecorder
+        // document.getElementById('record-status').textContent = 'Processing audio...';
         
         try {
-          console.log('Received audio data of length:', audioData.length);
-          
-          // Create form data with audio blob
-          const formData = new FormData();
-          
-          // Convert base64 to blob with proper MIME type
-          const byteCharacters = atob(audioData);
-          const byteNumbers = new Array(byteCharacters.length);
-          
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          if (!audioBlob || audioBlob.size === 0) {
+             console.error('[server-view] Received invalid or empty audioBlob.');
+             document.getElementById('record-status').textContent = 'Error: Received empty audio data.';
+             return; // Stop processing if blob is bad
           }
+          console.log('[server-view] Received valid audio blob of size:', audioBlob.size, 'bytes with type', audioBlob.type);
           
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'audio/webm;codecs=opus' });
+          console.log('[server-view] Creating FormData...'); // Log: Before FormData
+          // Create form data with the received audio blob
+          const formData = new FormData();
+          console.log('[server-view] FormData created.'); // Log: After FormData
           
-          console.log('Created blob of size:', blob.size, 'bytes');
           
-          // Add blob to form data
-          formData.append('audio', blob, 'recording.webm');
+          // Use a fixed .wav filename to match the backend expectation
+          const filename = 'recording.wav';
           
+          console.log(`[server-view] Appending blob to FormData with filename: ${filename}...`); // Log: Before append
+          // Add blob directly to form data
+          formData.append('audio', audioBlob, filename);
           // Log form data contents
           for (const pair of formData.entries()) {
             console.log('Form data entry:', pair[0], pair[1]);
           }
           
           // Send to server for transcription
+          console.log(`[server-view] Preparing fetch to /api/speech/transcribe with blob type: ${audioBlob.type} and filename: ${filename}`); // Log: Before fetch
           console.log('Sending audio to server for transcription...');
-          const response = await fetch('/speech/transcribe', {
+          const response = await fetch('/api/speech/transcribe', {
             method: 'POST',
             body: formData
           });

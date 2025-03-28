@@ -136,25 +136,50 @@ export class VoiceRecorder {
         }
       }
       
-      // Create media recorder with high bitrate
+      
+      
+      // Force WAV format based on server logs showing audio/wav content_type
+      const preferredMimeType = 'audio/wav';
+      console.log(`Attempting to force recorder MIME type: ${preferredMimeType}`);
+
+      // Create media recorder options
       const options = {
-        mimeType: 'audio/webm;codecs=opus',
-        audioBitsPerSecond: 128000
+        mimeType: preferredMimeType,
+        // audioBitsPerSecond might not be applicable/respected for WAV
+        // audioBitsPerSecond: 128000
       };
       
       try {
         this.mediaRecorder = new MediaRecorder(this.stream, options);
-        console.log('MediaRecorder created with options:', options);
+        // Store the actual mimeType being used (should be audio/wav)
+        this.actualMimeType = this.mediaRecorder.mimeType || preferredMimeType;
+        console.log('MediaRecorder created with options:', options, 'Actual MIME Type:', this.actualMimeType);
       } catch (err) {
-        console.warn('Failed to create MediaRecorder with specified options, trying default options:', err);
-        this.mediaRecorder = new MediaRecorder(this.stream);
+        // Try one last time with no options if specific mimeType failed
+        if (options.mimeType) {
+            try {
+                this.mediaRecorder = new MediaRecorder(this.stream);
+                this.actualMimeType = this.mediaRecorder.mimeType || 'audio/webm'; // Guess webm if default is empty
+                console.log('MediaRecorder created with default browser options. Actual MIME Type:', this.actualMimeType);
+            } catch (finalErr) {
+                 console.error('Failed to create MediaRecorder entirely:', finalErr);
+                 throw new Error(`Failed to initialize recorder: ${finalErr.message}`);
+            }
+        } else {
+             throw new Error(`Failed to initialize recorder: ${err.message}`);
+        }
       }
-      
       // Set up event handlers
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           this.audioChunks.push(e.data);
         }
+      };
+      
+      // Add onstop handler to process data when recording actually finishes
+      this.mediaRecorder.onstop = () => {
+          console.log('MediaRecorder stopped, processing audio chunks.');
+          this.processRecording(); // Process chunks when stop event fires
       };
       
       // Clear previous chunks
@@ -308,10 +333,10 @@ export class VoiceRecorder {
     // Remove animation
     this.recordButton.style.animation = '';
     
-    // Process the recording after a short delay to ensure all data is available
-    setTimeout(() => {
-      this.processRecording();
-    }, 500);
+    // Processing is now handled by the onstop event handler, remove setTimeout
+    // setTimeout(() => {
+    //   this.processRecording();
+    // }, 500);
   }
   
   /**
@@ -376,10 +401,10 @@ export class VoiceRecorder {
       console.log(`Chunk ${index} size: ${chunk.size} bytes`);
     });
     
-    // Create a blob from the audio chunks
-    const mimeType = 'audio/webm;codecs=opus';
+    // Create a blob from the audio chunks, forcing WAV type to align with server expectation
+    const mimeType = 'audio/wav';
     const audioBlob = new Blob(this.audioChunks, { type: mimeType });
-    console.log(`Created audio blob of size ${audioBlob.size} bytes with type ${mimeType}`);
+    console.log(`Created audio blob of size ${audioBlob.size} bytes with forced type ${mimeType}`);
     
     // Create an audio element for debugging (not displayed)
     const audioElement = document.createElement('audio');
@@ -395,23 +420,16 @@ export class VoiceRecorder {
       }
     };
     
-    // Convert blob to base64
-    const reader = new FileReader();
-    reader.readAsDataURL(audioBlob);
-    reader.onloadend = () => {
-      const base64Audio = reader.result.split(',')[1]; // Remove the data URL prefix
-      console.log(`Converted audio to base64, length: ${base64Audio.length} characters`);
-      
-      // Call the onRecordingComplete callback if defined
-      if (typeof this.onRecordingComplete === 'function') {
-        this.onRecordingComplete(base64Audio);
+    // Call the onRecordingComplete callback with the audioBlob directly
+    if (typeof this.onRecordingComplete === 'function') {
+      try {
+        this.onRecordingComplete(audioBlob); // Pass the blob
+        this.statusElement.textContent = 'Recording complete, processing...';
+      } catch (error) {
+        console.error('Error in onRecordingComplete callback:', error);
+        this.statusElement.textContent = 'Error processing recording';
       }
-      
-      this.statusElement.textContent = 'Recording complete';
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Error reading audio blob:', error);
+    } else {
       this.statusElement.textContent = 'Error processing recording';
     };
   }
