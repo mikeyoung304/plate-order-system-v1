@@ -107,10 +107,24 @@ export class VoiceRecorder {
         throw new Error("Your browser doesn't support audio recording. Please try a different browser.");
       }
       
-      // Request microphone access with explicit error handling
+      // Request microphone access with explicit error handling and high-quality audio constraints
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const constraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 44100,
+            sampleSize: 16
+          }
+        };
+        
+        console.log('Requesting microphone access with constraints:', constraints);
+        this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('Microphone access granted, stream created:', this.stream);
       } catch (err) {
+        console.error('Error accessing microphone:', err);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
           throw new Error("Microphone access denied. Please allow microphone access in your browser settings.");
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
@@ -122,8 +136,19 @@ export class VoiceRecorder {
         }
       }
       
-      // Create media recorder
-      this.mediaRecorder = new MediaRecorder(this.stream);
+      // Create media recorder with high bitrate
+      const options = {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000
+      };
+      
+      try {
+        this.mediaRecorder = new MediaRecorder(this.stream, options);
+        console.log('MediaRecorder created with options:', options);
+      } catch (err) {
+        console.warn('Failed to create MediaRecorder with specified options, trying default options:', err);
+        this.mediaRecorder = new MediaRecorder(this.stream);
+      }
       
       // Set up event handlers
       this.mediaRecorder.ondataavailable = (e) => {
@@ -344,14 +369,38 @@ export class VoiceRecorder {
       return;
     }
     
+    console.log(`Processing recording with ${this.audioChunks.length} chunks`);
+    
+    // Log the size of each chunk for debugging
+    this.audioChunks.forEach((chunk, index) => {
+      console.log(`Chunk ${index} size: ${chunk.size} bytes`);
+    });
+    
     // Create a blob from the audio chunks
-    const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+    const mimeType = 'audio/webm;codecs=opus';
+    const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+    console.log(`Created audio blob of size ${audioBlob.size} bytes with type ${mimeType}`);
+    
+    // Create an audio element for debugging (not displayed)
+    const audioElement = document.createElement('audio');
+    audioElement.controls = true;
+    const audioURL = URL.createObjectURL(audioBlob);
+    audioElement.src = audioURL;
+    
+    // Log audio duration when loaded
+    audioElement.onloadedmetadata = () => {
+      console.log(`Audio duration: ${audioElement.duration} seconds`);
+      if (audioElement.duration < 0.5) {
+        console.warn('Warning: Audio duration is very short, may not contain speech');
+      }
+    };
     
     // Convert blob to base64
     const reader = new FileReader();
     reader.readAsDataURL(audioBlob);
     reader.onloadend = () => {
       const base64Audio = reader.result.split(',')[1]; // Remove the data URL prefix
+      console.log(`Converted audio to base64, length: ${base64Audio.length} characters`);
       
       // Call the onRecordingComplete callback if defined
       if (typeof this.onRecordingComplete === 'function') {
@@ -359,6 +408,11 @@ export class VoiceRecorder {
       }
       
       this.statusElement.textContent = 'Recording complete';
+    };
+    
+    reader.onerror = (error) => {
+      console.error('Error reading audio blob:', error);
+      this.statusElement.textContent = 'Error processing recording';
     };
   }
   

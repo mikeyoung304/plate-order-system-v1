@@ -413,36 +413,81 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('record-status').textContent = 'Processing audio...';
         
         try {
+          console.log('Received audio data of length:', audioData.length);
+          
           // Create form data with audio blob
           const formData = new FormData();
-          const blob = await fetch(`data:audio/webm;base64,${audioData}`).then(res => res.blob());
+          
+          // Convert base64 to blob with proper MIME type
+          const byteCharacters = atob(audioData);
+          const byteNumbers = new Array(byteCharacters.length);
+          
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'audio/webm;codecs=opus' });
+          
+          console.log('Created blob of size:', blob.size, 'bytes');
+          
+          // Add blob to form data
           formData.append('audio', blob, 'recording.webm');
           
+          // Log form data contents
+          for (const pair of formData.entries()) {
+            console.log('Form data entry:', pair[0], pair[1]);
+          }
+          
           // Send to server for transcription
-          const response = await fetch('/api/speech/transcribe', {
+          console.log('Sending audio to server for transcription...');
+          const response = await fetch('/speech/transcribe', {
             method: 'POST',
             body: formData
           });
           
+          console.log('Server response status:', response.status);
+          
           if (!response.ok) {
-            throw new Error('Failed to transcribe audio');
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Failed to transcribe audio: ${response.status} ${response.statusText}`);
           }
           
           const result = await response.json();
+          console.log('Transcription result:', result);
           
           // Show transcription result
           const modalTranscriptionResult = document.getElementById('modal-transcription-result');
           const modalTranscriptionText = document.getElementById('modal-transcription-text');
           
-          modalTranscriptionResult.classList.remove('hidden');
-          modalTranscriptionText.textContent = result.text;
-          
-          // Update status
-          document.getElementById('record-status').textContent = 'Transcription complete';
+          if (result.text && result.text.trim()) {
+            modalTranscriptionResult.classList.remove('hidden');
+            modalTranscriptionText.textContent = result.text;
+            
+            // Update status
+            document.getElementById('record-status').textContent = 'Transcription complete';
+          } else {
+            throw new Error('No transcription text returned from server');
+          }
           
         } catch (error) {
           console.error('Error transcribing audio:', error);
           document.getElementById('record-status').textContent = 'Error: ' + error.message;
+          
+          // Show error message in transcription area
+          const modalTranscriptionResult = document.getElementById('modal-transcription-result');
+          const modalTranscriptionText = document.getElementById('modal-transcription-text');
+          
+          modalTranscriptionResult.classList.remove('hidden');
+          modalTranscriptionText.textContent = `Error: ${error.message}. Please try again and speak clearly.`;
+          modalTranscriptionText.classList.add('text-red-600');
+          
+          // Add retry button
+          const retryBtn = document.getElementById('retry-recording-btn');
+          if (retryBtn) {
+            retryBtn.focus();
+          }
         }
       });
       

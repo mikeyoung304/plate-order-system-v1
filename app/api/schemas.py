@@ -47,7 +47,6 @@ class OrderUpdate(BaseModel):
     raw_transcription: Optional[str] = None
     flagged: Optional[str] = None
     status: Optional[str] = None
-    status: Optional[str] = None
 
 class OrderInDB(OrderBase):
     id: int
