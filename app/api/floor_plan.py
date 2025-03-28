@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 # Default tables when none exist
 DEFAULT_TABLES = [
-    {"id": 1, "number": 1, "type": "round-4", "x": 100, "y": 100},
-    {"id": 2, "number": 2, "type": "round-4", "x": 250, "y": 100},
-    {"id": 3, "number": 3, "type": "round-4", "x": 400, "y": 100},
-    {"id": 4, "number": 4, "type": "round-4", "x": 100, "y": 250},
-    {"id": 5, "number": 5, "type": "round-4", "x": 250, "y": 250},
-    {"id": 6, "number": 6, "type": "round-4", "x": 400, "y": 250}
+    {"id": 1, "number": 1, "type": "square-4", "x": 100, "y": 100, "status": "available"},
+    {"id": 2, "number": 2, "type": "square-4", "x": 250, "y": 100, "status": "occupied"},
+    {"id": 3, "number": 3, "type": "square-4", "x": 400, "y": 100, "status": "available"},
+    {"id": 4, "number": 4, "type": "rectangle-6", "x": 100, "y": 250, "status": "occupied"},
+    {"id": 5, "number": 5, "type": "rectangle-6", "x": 250, "y": 250, "status": "available"},
+    {"id": 6, "number": 6, "type": "round-4", "x": 400, "y": 250, "status": "available"}
 ]
 
 @router.get("/")
@@ -83,3 +83,11 @@ def get_tables(db: Session = Depends(get_db)):
         return DEFAULT_TABLES
         
     return tables
+
+# Add a direct /api/tables endpoint for frontend compatibility
+@router.get("/", include_in_schema=False)
+def get_tables_root(db: Session = Depends(get_db)):
+    """
+    Get all tables (root endpoint for compatibility)
+    """
+    return get_tables(db)

@@ -10,8 +10,6 @@ import uvicorn
 
 # Import API router
 from app.api import api_router
-from app.api import admin
-from app.api import websocket
 from app.api.middleware.error_handler import (
     validation_exception_handler,
     sqlalchemy_exception_handler,
@@ -51,45 +49,38 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Include API router
 app.include_router(api_router)
-app.include_router(websocket.router)
-app.include_router(admin.router)
 
 # API key from environment variable
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
     logger.warning("OPENAI_API_KEY not set in environment variables")
+    logger.warning("Voice transcription will not work without an OpenAI API key")
+else:
+    logger.info("OPENAI_API_KEY is set in environment variables")
+    logger.info("Using OpenAI Whisper API for voice transcription")
 
 # Health check endpoint
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
+# Favicon route
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse("app/static/img/favicon.ico")
+
 # Home page route
 @app.get("/")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Server view route
-@app.get("/server-view")
-async def server_view(request: Request):
-    return templates.TemplateResponse("server-view.html", {"request": request})
-
-# Kitchen view route
-@app.get("/kitchen-view")
-async def kitchen_view(request: Request):
-    return templates.TemplateResponse("kitchen-view.html", {"request": request})
-
-# Admin view route
-@app.get("/admin-view")
-async def admin_view(request: Request):
-    return templates.TemplateResponse("admin-view.html", {"request": request})
-
-# Floor plan route (legacy)
+# Floor plan route
 @app.get("/floor-plan")
 async def floor_plan(request: Request):
     return templates.TemplateResponse("floor-plan.html", {"request": request})
 
-# KDS route (legacy)
+# KDS route
 @app.get("/kds")
 async def kds(request: Request):
     return templates.TemplateResponse("kds.html", {"request": request})
@@ -113,11 +104,6 @@ async def server_view(request: Request):
 @app.get("/kitchen-view")
 async def kitchen_view(request: Request):
     return templates.TemplateResponse("kitchen-view.html", {"request": request})
-
-# Admin dashboard route
-@app.get("/admin-view")
-async def admin_view(request: Request):
-    return templates.TemplateResponse("admin-view.html", {"request": request})
 
 # WebSocket connection for real-time updates
 class ConnectionManager:

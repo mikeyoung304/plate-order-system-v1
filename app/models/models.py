@@ -34,6 +34,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     table_id = Column(Integer, nullable=True)  # Can be null if order is for a resident directly
+    seat = Column(String(10), nullable=True)   # Seat identifier (S1, S2, etc.)
     resident_id = Column(Integer, ForeignKey("residents.id"), nullable=True)
     details = Column(Text, nullable=False)  # Processed order text
     raw_transcription = Column(Text, nullable=True)  # Original transcription

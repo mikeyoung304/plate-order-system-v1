@@ -29,6 +29,7 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     """
     db_order = Order(
         table_id=order.table_id,
+        seat=order.seat,
         resident_id=order.resident_id,
         details=order.details,
         raw_transcription=order.raw_transcription,

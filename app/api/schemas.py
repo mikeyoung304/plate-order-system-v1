@@ -30,6 +30,7 @@ class Resident(ResidentInDB):
 # Order schemas
 class OrderBase(BaseModel):
     table_id: Optional[int] = None
+    seat: Optional[str] = None
     resident_id: Optional[int] = None
     details: str
     raw_transcription: Optional[str] = None
@@ -38,13 +39,14 @@ class OrderBase(BaseModel):
 
 class OrderCreate(OrderBase):
     pass
-
 class OrderUpdate(BaseModel):
     table_id: Optional[int] = None
+    seat: Optional[str] = None
     resident_id: Optional[int] = None
     details: Optional[str] = None
     raw_transcription: Optional[str] = None
     flagged: Optional[str] = None
+    status: Optional[str] = None
     status: Optional[str] = None
 
 class OrderInDB(OrderBase):

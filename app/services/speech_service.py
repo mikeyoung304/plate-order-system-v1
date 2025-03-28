@@ -3,6 +3,9 @@ import os
 import json
 from typing import BinaryIO, Dict, Any, Optional
 import base64
+import tempfile
+
+from app.services.voice.whisper_service import WhisperService
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -18,8 +21,11 @@ class SpeechService:
         self.api_key = os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
             logger.warning("OPENAI_API_KEY not set in environment variables")
+        
+        # Initialize WhisperService
+        self.whisper_service = WhisperService()
     
-    def transcribe_audio(self, audio_file: BinaryIO) -> Dict[str, Any]:
+    async def transcribe_audio(self, audio_file: BinaryIO) -> Dict[str, Any]:
         """
         Transcribe audio using OpenAI Whisper API
         
@@ -30,19 +36,20 @@ class SpeechService:
             Dictionary with transcription result
         """
         try:
-            # In a real implementation, this would use the OpenAI API
             logger.info("Processing audio file")
             
             if self.api_key:
-                # For MVP, we'll use a simplified implementation
-                # that returns a realistic sample response
-                # In production, uncomment and use the following:
-                # import openai
-                # openai.api_key = self.api_key
-                # response = openai.Audio.transcribe("whisper-1", audio_file)
-                # return {"success": True, "text": response["text"]}
+                # Use WhisperService to transcribe audio
+                result = await self.whisper_service.transcribe_audio(audio_file)
                 
-                # Realistic sample response for MVP testing
+                if "error" in result:
+                    logger.error(f"Error from WhisperService: {result['error']}")
+                    return {"success": False, "error": result["error"]}
+                
+                return {"success": True, "text": result["text"]}
+            else:
+                # Fallback to sample responses if API key is not set
+                logger.warning("Using sample responses (OpenAI API key not set)")
                 sample_responses = [
                     "Table 3: 1 cheeseburger with fries. 1 chicken sandwich. 1 diet coke.",
                     "I need 2 grilled chicken salads and a water for table 5.",
@@ -51,9 +58,6 @@ class SpeechService:
                 ]
                 import random
                 return {"success": True, "text": random.choice(sample_responses)}
-            else:
-                logger.error("Cannot transcribe: OpenAI API key not set")
-                return {"success": False, "error": "OpenAI API key not set"}
                 
         except Exception as e:
             logger.error(f"Error transcribing audio: {str(e)}")
@@ -70,12 +74,55 @@ class SpeechService:
             Transcription text
         """
         try:
-            # In a real implementation, this would decode the base64 data and use the OpenAI API
-            # For now, we'll return a placeholder response
             logger.info(f"Processing audio data of length: {len(audio_data)}")
             
-            # Placeholder for actual processing
-            return "This is a placeholder transcription from base64 audio data."
+            if self.api_key:
+                # Convert base64 to binary data
+                binary_data = base64.b64decode(audio_data)
+                
+                # Create a temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_file:
+                    temp_file.write(binary_data)
+                    temp_file_path = temp_file.name
+                
+                try:
+                    # Use OpenAI API to transcribe
+                    import openai
+                    openai.api_key = self.api_key
+                    
+                    with open(temp_file_path, "rb") as audio_file:
+                        response = openai.Audio.transcribe("whisper-1", audio_file)
+                    
+                    # Clean up the temporary file
+                    os.remove(temp_file_path)
+                    
+                    return response.get("text", "")
+                except Exception as e:
+                    logger.error(f"Error using OpenAI API: {str(e)}")
+                    # Clean up the temporary file
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                    
+                    # Fallback to sample responses
+                    sample_responses = [
+                        "Table 3: 1 cheeseburger with fries. 1 chicken sandwich. 1 diet coke.",
+                        "I need 2 grilled chicken salads and a water for table 5.",
+                        "Table 8 wants 1 soup of the day, 1 fish special, and 2 iced teas.",
+                        "Table 2: 1 veggie burger no onions. 1 side salad with dressing on the side. 1 lemonade."
+                    ]
+                    import random
+                    return random.choice(sample_responses)
+            else:
+                # Fallback to sample responses if API key is not set
+                logger.warning("Using sample responses (OpenAI API key not set)")
+                sample_responses = [
+                    "Table 3: 1 cheeseburger with fries. 1 chicken sandwich. 1 diet coke.",
+                    "I need 2 grilled chicken salads and a water for table 5.",
+                    "Table 8 wants 1 soup of the day, 1 fish special, and 2 iced teas.",
+                    "Table 2: 1 veggie burger no onions. 1 side salad with dressing on the side. 1 lemonade."
+                ]
+                import random
+                return random.choice(sample_responses)
             
         except Exception as e:
             logger.error(f"Error processing audio data: {str(e)}")

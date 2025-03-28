@@ -167,8 +167,10 @@ function createOrderCard(order, template) {
     orderCard.dataset.status = order.status;
     orderCard.classList.add(`status-${order.status}`);
     
-    // Set header info
-    orderCard.querySelector('.order-table').textContent = order.table_id ? `Table ${order.table_id}` : 'No Table';
+    // Set header info with table and seat
+    const tableText = order.table_id ? `Table ${order.table_id}` : 'No Table';
+    const seatText = order.seat ? ` - Seat ${order.seat}` : '';
+    orderCard.querySelector('.order-table').textContent = tableText + seatText;
     
     // Format time
     const orderTime = new Date(order.created_at);
