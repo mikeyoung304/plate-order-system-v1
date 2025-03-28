@@ -24,6 +24,125 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
+  // --- WebSocket Setup ---
+  function connectWebSocket() {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/listen/ws/listen`; // Matches backend route
+    
+    console.log(`Attempting to connect WebSocket to: ${wsUrl}`);
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+      console.log('WebSocket connection established.');
+      isWsConnected = true;
+      // Optionally enable UI elements that depend on WS connection
+      if (voiceOrderBtn && !voiceOrderBtn.disabled) { // Check if a table is already selected
+         // Keep button enabled if table selected, otherwise it stays disabled
+      }
+    };
+    
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('WebSocket message received:', message);
+        
+        // Handle different message types from backend (DeepgramService)
+        switch (message.type) {
+          case 'transcript':
+            handleTranscript(message.data);
+            break;
+          case 'metadata':
+            console.log('Received metadata:', message.data);
+            // Handle metadata if needed
+            break;
+          case 'speech_started':
+            console.log('Speech started event received.');
+            // Update UI if needed
+            break;
+          case 'utterance_end':
+            console.log('Utterance end event received.');
+            // Update UI if needed
+            break;
+          case 'dg_open':
+             console.log('Deepgram connection opened (reported by backend).');
+             // Maybe update status in modal?
+             const statusElement = document.getElementById('record-status');
+             if (statusElement && statusElement.textContent.includes('Recording')) {
+                // statusElement.textContent = 'Recording... (Connected to Deepgram)';
+             }
+             break;
+           case 'dg_close':
+             console.warn('Deepgram connection closed (reported by backend).');
+             // Update UI to indicate potential issue
+             break;
+          case 'error':
+            console.error('Error message from WebSocket server:', message.data);
+            // Display error to user, perhaps in the modal status
+             const errorStatusElement = document.getElementById('record-status');
+             if (errorStatusElement) {
+                errorStatusElement.textContent = `Server Error: ${message.data}`;
+             }
+            break;
+          default:
+            console.log('Unknown WebSocket message type:', message.type);
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error, 'Raw data:', event.data);
+      }
+    };
+    
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      isWsConnected = false;
+      // Update UI to show connection error
+       const statusElement = document.getElementById('record-status');
+       if (statusElement) {
+          statusElement.textContent = 'WebSocket connection error. Please refresh.';
+       }
+       // Disable voice button?
+       if (voiceOrderBtn) voiceOrderBtn.disabled = true;
+    };
+    
+    socket.onclose = (event) => {
+      console.log('WebSocket connection closed:', event.code, event.reason);
+      isWsConnected = false;
+      // Update UI, maybe attempt reconnect?
+       const statusElement = document.getElementById('record-status');
+       if (statusElement) {
+          // Avoid overwriting specific error messages
+          if (!statusElement.textContent.toLowerCase().includes('error')) {
+             statusElement.textContent = 'Disconnected. Please refresh.';
+          }
+       }
+       if (voiceOrderBtn) voiceOrderBtn.disabled = true; // Disable on disconnect
+      // Simple reconnect logic (optional, can be more robust)
+      // setTimeout(connectWebSocket, 5000); // Attempt reconnect after 5 seconds
+    };
+  }
+  
+  // Function to handle received transcripts
+  function handleTranscript(transcript) {
+     console.log('Handling transcript:', transcript);
+     const modalTranscriptionResult = document.getElementById('modal-transcription-result');
+     const modalTranscriptionText = document.getElementById('modal-transcription-text');
+     const statusElement = document.getElementById('record-status');
+
+     if (modalTranscriptionResult && modalTranscriptionText && statusElement) {
+        modalTranscriptionResult.classList.remove('hidden');
+        // Append transcript - adjust if you only want final results
+        // For now, let's just replace with the latest transcript
+        modalTranscriptionText.textContent = transcript;
+        modalTranscriptionText.classList.remove('text-red-600'); // Ensure not styled as error
+        statusElement.textContent = 'Transcription received...'; // Update status
+     } else {
+        console.error('Modal elements for transcription not found!');
+     }
+  }
+
+  // Connect WebSocket when the page loads
+  connectWebSocket();
+  // --- End WebSocket Setup ---
+
   // Add floor plan controls
   addFloorPlanControls();
   
@@ -42,6 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const noTableSelected = document.getElementById('no-table-selected');
   const tableSelected = document.getElementById('table-selected');
   const voiceOrderBtn = document.getElementById('voice-order-btn');
+  
+  // WebSocket variables
+  let socket = null;
+  let isWsConnected = false;
   
   // Add floor plan edit button (only for admin)
   const floorPlanHeader = document.querySelector('h2.text-xl.font-semibold.text-gray-800.mb-4');

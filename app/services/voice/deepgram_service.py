@@ -2,8 +2,8 @@ import asyncio
 import os
 import logging
 from dotenv import load_dotenv
-# Reverting import path to deepgram.clients.live for v2.x SDK structure
-from deepgram.clients.live import DeepgramClientOptions, AsyncLiveClient, LiveOptions, LiveTranscriptionEvents # Changed import path
+# Trying top-level import again based on installed package structure
+from deepgram import DeepgramClientOptions, AsyncLiveClient, LiveOptions, LiveTranscriptionEvents # Changed import path
 
 load_dotenv()
 
@@ -105,9 +105,10 @@ class DeepgramService:
                 encoding="linear16", # Requires 16-bit PCM audio
                 sample_rate=16000,   # Requires 16kHz sample rate
                 channels=1,
-                interim_results=True, # Get results faster
+                interim_results=False, # Disabled interim results
                 utterance_end_ms="1000",
                 vad_events=True,
+                punctuate=True,
             )
 
             await self.dg_connection.start(options)

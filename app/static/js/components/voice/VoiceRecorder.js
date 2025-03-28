@@ -26,9 +26,10 @@ export class VoiceRecorder {
     this.recordingStartTime = 0;
     this.stream = null;
     
-    this.onRecordingComplete = null;
+    this.onRecordingComplete = null; // May need rethinking for streaming
     this.onRecordingStart = null;
     this.onRecordingCancel = null;
+    this.socket = null; // Added property for WebSocket instance
     
     if (this.recordButton && this.statusElement) {
       this.init();
@@ -115,7 +116,7 @@ export class VoiceRecorder {
             noiseSuppression: true,
             autoGainControl: true,
             channelCount: 1,
-            sampleRate: 44100,
+            sampleRate: 16000, // Requesting 16kHz to match backend
             sampleSize: 16
           }
         };
@@ -136,7 +137,21 @@ export class VoiceRecorder {
         }
       }
       
-      
+      // Add listener for unexpected track ending
+      if (this.stream && this.stream.getAudioTracks().length > 0) {
+        const audioTrack = this.stream.getAudioTracks()[0];
+        audioTrack.onended = () => {
+          console.warn('VoiceRecorder: Audio track ended unexpectedly!');
+          // Optionally, try to handle this state, e.g., force stop recording if active
+          if (this.isRecording) {
+             console.warn('VoiceRecorder: Forcing stop recording due to unexpected track end.');
+             this.stopRecording(); // Or perhaps cancelRecording?
+          }
+        };
+        console.log('VoiceRecorder: Added onended listener to audio track.');
+      } else {
+         console.error('VoiceRecorder: Could not get audio track to add onended listener.');
+      }
       
       // Force WAV format based on server logs showing audio/wav content_type
       const preferredMimeType = 'audio/wav';
@@ -172,17 +187,26 @@ export class VoiceRecorder {
       // Set up event handlers
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          this.audioChunks.push(e.data);
+          // Send chunk over WebSocket if connected
+          if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            // console.log(`Sending audio chunk size: ${e.data.size}`); // Debug log (can be verbose)
+            this.socket.send(e.data);
+          } else {
+            console.warn('WebSocket not open, cannot send audio chunk.');
+            // Optionally buffer chunks here if needed, but for live streaming, dropping might be okay
+          }
+          // We no longer need to store chunks locally for a final blob
+          // this.audioChunks.push(e.data);
         }
       };
       
-      // Add onstop handler to process data when recording actually finishes
+      // Add onstop handler - primarily for logging/cleanup now
       this.mediaRecorder.onstop = () => {
-          console.log('MediaRecorder stopped, processing audio chunks.');
-          this.processRecording(); // Process chunks when stop event fires
+          console.log('MediaRecorder stopped.');
+          // No longer calling processRecording() here
       };
       
-      // Clear previous chunks
+      // Clear previous chunks (still good practice, though not strictly needed for streaming)
       this.audioChunks = [];
       
       // Start recording
@@ -333,10 +357,15 @@ export class VoiceRecorder {
     // Remove animation
     this.recordButton.style.animation = '';
     
-    // Processing is now handled by the onstop event handler, remove setTimeout
-    // setTimeout(() => {
-    //   this.processRecording();
-    // }, 500);
+    // Send End-of-Stream signal via WebSocket
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+       console.log('Sending End-of-Stream signal.');
+       this.socket.send(JSON.stringify({ type: 'EOS' }));
+    } else {
+       console.warn('WebSocket not open, cannot send End-of-Stream signal.');
+    }
+    
+    // No longer need to call processRecording
   }
   
   /**
@@ -378,6 +407,14 @@ export class VoiceRecorder {
     
     // Remove animation
     this.recordButton.style.animation = '';
+
+    // Send End-of-Stream signal via WebSocket on cancel too, as backend might expect it
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+       console.log('Sending End-of-Stream signal on cancel.');
+       this.socket.send(JSON.stringify({ type: 'EOS' }));
+    } else {
+       console.warn('WebSocket not open, cannot send End-of-Stream signal on cancel.');
+    }
     
     // Call the onRecordingCancel callback if defined
     if (typeof this.onRecordingCancel === 'function') {
@@ -385,57 +422,10 @@ export class VoiceRecorder {
     }
   }
   
-  /**
-   * Process the recording
-   */
-  processRecording() {
-    if (this.audioChunks.length === 0) {
-      this.statusElement.textContent = 'No audio recorded';
-      return;
-    }
-    
-    console.log(`Processing recording with ${this.audioChunks.length} chunks`);
-    
-    // Log the size of each chunk for debugging
-    this.audioChunks.forEach((chunk, index) => {
-      console.log(`Chunk ${index} size: ${chunk.size} bytes`);
-    });
-    
-    // Create a blob from the audio chunks, forcing WAV type to align with server expectation
-    const mimeType = 'audio/wav';
-    const audioBlob = new Blob(this.audioChunks, { type: mimeType });
-    console.log(`Created audio blob of size ${audioBlob.size} bytes with forced type ${mimeType}`);
-    
-    // Create an audio element for debugging (not displayed)
-    const audioElement = document.createElement('audio');
-    audioElement.controls = true;
-    const audioURL = URL.createObjectURL(audioBlob);
-    audioElement.src = audioURL;
-    
-    // Log audio duration when loaded
-    audioElement.onloadedmetadata = () => {
-      console.log(`Audio duration: ${audioElement.duration} seconds`);
-      if (audioElement.duration < 0.5) {
-        console.warn('Warning: Audio duration is very short, may not contain speech');
-      }
-    };
-    
-    // Call the onRecordingComplete callback with the audioBlob directly
-    if (typeof this.onRecordingComplete === 'function') {
-      try {
-        this.onRecordingComplete(audioBlob); // Pass the blob
-        this.statusElement.textContent = 'Recording complete, processing...';
-      } catch (error) {
-        console.error('Error in onRecordingComplete callback:', error);
-        this.statusElement.textContent = 'Error processing recording';
-      }
-    } else {
-      this.statusElement.textContent = 'Error processing recording';
-    };
-  }
+  // Removed processRecording() method as audio is now streamed via WebSocket
   
   /**
-   * Set callback for recording completion
+   * Set callback for recording completion (May need adjustment for streaming)
    * @param {Function} callback - Function to call when recording is complete
    */
   setOnRecordingComplete(callback) {
@@ -456,5 +446,14 @@ export class VoiceRecorder {
    */
   setOnRecordingCancel(callback) {
     this.onRecordingCancel = callback;
+  }
+  
+  /**
+   * Set the WebSocket instance to use for sending audio data
+   * @param {WebSocket} socketInstance - The active WebSocket connection
+   */
+  setWebSocket(socketInstance) {
+    this.socket = socketInstance;
+    console.log('VoiceRecorder: WebSocket instance set.');
   }
 }
