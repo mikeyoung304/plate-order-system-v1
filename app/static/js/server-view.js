@@ -191,9 +191,25 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update UI based on table mode
       updateTableModeUI(floorPlan.tableMode);
       
-      // Disable voice order button until seat is selected
+      // Enable voice order button when table is selected
+      // Default to seat S1 if no seat is explicitly selected
       if (voiceOrderBtn) {
-        voiceOrderBtn.disabled = true;
+        voiceOrderBtn.disabled = false;
+        
+        // Create default seat info if it doesn't exist
+        const selectedSeatElement = document.getElementById('selected-seat');
+        if (!selectedSeatElement) {
+          const seatInfo = document.createElement('div');
+          seatInfo.className = 'flex items-center mb-4';
+          seatInfo.innerHTML = `
+            <div class="w-3 h-3 rounded-full bg-indigo-500 mr-2"></div>
+            <p class="text-gray-700">Seat: <span id="selected-seat" class="font-medium">S1</span></p>
+          `;
+          
+          // Insert after table status
+          const tableStatusElement = document.querySelector('#status-indicator').parentNode;
+          tableStatusElement.parentNode.insertBefore(seatInfo, tableStatusElement.nextSibling);
+        }
       }
     } else {
       // Show no table selected view
@@ -341,16 +357,24 @@ document.addEventListener('DOMContentLoaded', () => {
    * @param {string} seatNumber - Seat number
    */
   function startRecording(tableId, seatNumber) {
+    console.log(`Starting recording for Table ${tableId}, Seat ${seatNumber}`);
+    
     const modal = document.getElementById('voice-recorder-modal');
-    if (modal) {
-      // Update modal title to include table and seat
-      const modalTitle = modal.querySelector('h3');
-      if (modalTitle) {
-        modalTitle.textContent = `Record Order for Table ${tableId} - ${seatNumber}`;
-      }
-      
-      modal.classList.remove('hidden');
-      
+    if (!modal) {
+      console.error('Voice recorder modal not found');
+      return;
+    }
+    
+    // Update modal title to include table and seat
+    const modalTitle = modal.querySelector('h3');
+    if (modalTitle) {
+      modalTitle.textContent = `Record Order for Table ${tableId} - ${seatNumber}`;
+    }
+    
+    // Show the modal
+    modal.classList.remove('hidden');
+    
+    try {
       // Initialize voice recorder
       const voiceRecorder = new VoiceRecorder({
         recordButtonId: 'record-button',
@@ -363,14 +387,27 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Set up recording start handler
       voiceRecorder.setOnRecordingStart(() => {
-        // Set up audio visualization
-        window.setupAudioVisualization(voiceRecorder.stream);
+        console.log('Recording started, setting up audio visualization');
+        try {
+          // Set up audio visualization
+          if (typeof window.setupAudioVisualization !== 'function') {
+            console.error('setupAudioVisualization function not found');
+            return;
+          }
+          window.setupAudioVisualization(voiceRecorder.stream);
+        } catch (error) {
+          console.error('Error setting up audio visualization:', error);
+        }
       });
       
       // Set up recording completion handler
       voiceRecorder.setOnRecordingComplete(async (audioData) => {
         // Stop audio visualization
-        window.stopAudioVisualization();
+        if (typeof window.stopAudioVisualization === 'function') {
+          window.stopAudioVisualization();
+        } else {
+          console.error('stopAudioVisualization function not found');
+        }
         
         // Show processing message
         document.getElementById('record-status').textContent = 'Processing audio...';
@@ -412,8 +449,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Set up recording cancel handler
       voiceRecorder.setOnRecordingCancel(() => {
         // Stop audio visualization
-        window.stopAudioVisualization();
+        if (typeof window.stopAudioVisualization === 'function') {
+          window.stopAudioVisualization();
+        } else {
+          console.error('stopAudioVisualization function not found');
+        }
       });
+    } catch (error) {
+      console.error('Error initializing voice recorder:', error);
+      document.getElementById('record-status').textContent = `Error: ${error.message}`;
     }
   }
   
@@ -438,7 +482,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.add('hidden');
         
         // Stop audio visualization if active
-        window.stopAudioVisualization();
+        if (typeof window.stopAudioVisualization === 'function') {
+          window.stopAudioVisualization();
+        } else {
+          console.error('stopAudioVisualization function not found');
+        }
       }
     });
   }
