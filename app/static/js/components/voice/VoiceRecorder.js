@@ -97,8 +97,30 @@ export class VoiceRecorder {
     if (this.isRecording || this.recordButton.disabled) return;
     
     try {
-      // Request microphone access
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Check if we're in a secure context
+      if (!window.isSecureContext) {
+        throw new Error("Secure context required. Please access this site via HTTPS.");
+      }
+      
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Your browser doesn't support audio recording. Please try a different browser.");
+      }
+      
+      // Request microphone access with explicit error handling
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          throw new Error("Microphone access denied. Please allow microphone access in your browser settings.");
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          throw new Error("No microphone found. Please connect a microphone and try again.");
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          throw new Error("Microphone is already in use by another application.");
+        } else {
+          throw new Error(`Microphone error: ${err.message}`);
+        }
+      }
       
       // Create media recorder
       this.mediaRecorder = new MediaRecorder(this.stream);
@@ -153,13 +175,32 @@ export class VoiceRecorder {
       }
     } catch (error) {
       console.error("Error starting recording:", error);
-      this.statusElement.textContent = "Error: Could not access microphone";
+      this.statusElement.textContent = `Error: ${error.message}`;
       
       // Show error animation
       this.recordButton.classList.add("shake");
       setTimeout(() => {
         this.recordButton.classList.remove("shake");
       }, 500);
+      
+      // Add a help button for microphone issues
+      const helpButton = document.createElement('button');
+      helpButton.className = 'mt-2 text-sm text-indigo-600 hover:text-indigo-800';
+      helpButton.textContent = 'How to fix microphone issues';
+      helpButton.onclick = () => {
+        alert(`Microphone Troubleshooting:
+1. Make sure you've allowed microphone access in your browser
+2. Check that no other application is using your microphone
+3. Try refreshing the page
+4. Make sure you're accessing the site via HTTPS
+5. Try using a different browser`);
+      };
+      
+      // Add the help button after the status element
+      if (!document.getElementById('mic-help-button')) {
+        helpButton.id = 'mic-help-button';
+        this.statusElement.parentNode.appendChild(helpButton);
+      }
     }
   }
   
