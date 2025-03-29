@@ -27,7 +27,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python run.py
     envVars:
-      - key: OPENAI_API_KEY
+      - key: DEEPGRAM_API_KEY
         sync: false
       - key: ADMIN_USERNAME
         sync: false
@@ -69,13 +69,13 @@ cat > RENDER_DEPLOYMENT.md << 'EOF'
 2. Select your GitHub repository
 3. Render will detect the render.yaml file and configure the service
 4. Set the following environment variables in the Render dashboard:
-   - OPENAI_API_KEY: Your OpenAI API key
+   - DEEPGRAM_API_KEY: Your Deepgram API key
    - ADMIN_USERNAME: Admin username for the dashboard
    - ADMIN_PASSWORD: Admin password for the dashboard
 5. Click "Apply" to deploy the application
 
 ## Important Notes
-- Make sure your OpenAI API key has access to the Whisper API
+- Make sure your Deepgram API key is valid and has sufficient credits
 - The application will run in production mode on Render
 - The .env file is not included in the repository for security reasons
 EOF

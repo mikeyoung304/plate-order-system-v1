@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.17",
+    "@types/jest": "^29.5.14",
     "autoprefixer": "^10.4.21",
     "cssnano": "^7.0.6",
     "postcss": "^8.5.3",
@@ -16,6 +17,7 @@
   },
   "private": true,
   "dependencies": {
-    "puppeteer": "^24.4.0"
+    "puppeteer": "^24.4.0",
+    "react-toastify": "^11.0.5"
   }
 }

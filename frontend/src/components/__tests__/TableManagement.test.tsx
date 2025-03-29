@@ -46,6 +46,13 @@ describe('TableManagement', () => {
     mockedAxios.post.mockResolvedValue({ data: { ...mockLayout.tables[0], id: 2 } });
     mockedAxios.put.mockResolvedValue({ data: mockLayout.tables[0] });
     mockedAxios.delete.mockResolvedValue({ data: {} });
+
+    // Mock window.confirm
+    const mockConfirm = jest.fn(() => true);
+    Object.defineProperty(window, 'confirm', {
+      writable: true,
+      value: mockConfirm
+    });
   });
 
   afterEach(() => {
@@ -169,7 +176,7 @@ describe('TableManagement', () => {
     fireEvent.click(screen.getByText('Table 1'));
 
     // Click delete button
-    fireEvent.click(screen.getByRole('button', { name: /delete table/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Delete Table/i }));
 
     // Verify the API call
     await waitFor(() => {

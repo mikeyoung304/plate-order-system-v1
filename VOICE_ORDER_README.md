@@ -4,34 +4,33 @@ This document provides instructions on how to ensure the voice-to-order function
 
 ## Prerequisites
 
-1. An OpenAI API key with access to the Whisper API
-2. The `.env` file with your OpenAI API key
+1. A Deepgram API key
+2. The `.env` file with your Deepgram API key
 
 ## Testing the Voice Order Functionality
 
-### 1. Run the server with OpenAI Whisper API
+### 1. Run the server with Deepgram API
 
-To run the server with the OpenAI Whisper API, use the provided script:
+To run the server with the Deepgram API, use the provided script:
 
 ```bash
 ./run_server_with_whisper.sh
 ```
 
-This script will:
-- Check if python-dotenv is installed
-- Verify that the .env file exists and contains the OPENAI_API_KEY
-- Run the server on port 8001
+Before running the script:
+- Verify that the .env file exists and contains the DEEPGRAM_API_KEY
+- Make sure you have the required dependencies installed
 
-### 2. Test the OpenAI Whisper API integration
+### 2. Test the Deepgram API integration
 
-To test if your OpenAI API key has access to the Whisper API and if the local API endpoint is working, use the provided script:
+To test if your Deepgram API key is valid and if the local API endpoint is working, use the provided script:
 
 ```bash
-python test_openai_whisper.py
+python test_deepgram.py
 ```
 
 This script will:
-- Test if your OpenAI API key is valid
+- Test if your Deepgram API key is valid
 - Check if you have access to the Whisper API
 - Test the local API endpoint for transcription
 
@@ -71,16 +70,16 @@ After running this script, follow the instructions in RENDER_DEPLOYMENT.md to de
 
 1. Make sure your browser has permission to access the microphone
 2. Check the browser console for any errors
-3. Verify that your OpenAI API key is valid and has access to the Whisper API
+3. Verify that your Deepgram API key is valid and has access to the Whisper API
 
 ### Server returns 500 error
 
 1. Check the server logs for any errors
-2. Verify that your OpenAI API key is valid and has access to the Whisper API
+2. Verify that your Deepgram API key is valid and has access to the Whisper API
 3. Make sure the .env file is being loaded properly
 
 ### Environment variables not being loaded
 
 1. Run the fix_voice_order.sh script
 2. Check if python-dotenv is installed
-3. Verify that the .env file exists and contains the OPENAI_API_KEY
+3. Verify that the .env file exists and contains the DEEPGRAM_API_KEY

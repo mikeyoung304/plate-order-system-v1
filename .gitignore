@@ -65,3 +65,15 @@ checkpoints/
 
 # Nohup output
 nohup.out
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Test coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Pre-commit
+.pre-commit-config.yaml.bak

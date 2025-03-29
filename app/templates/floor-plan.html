@@ -4,97 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Floor Plan - Plate Order System</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/floor-plan.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="/static/img/favicon.ico">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 600px;
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        p {
+            margin-bottom: 2rem;
+            color: #6b7280;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #2563eb;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar">
-            <div class="logo">Plate</div>
-            <nav>
-                <ul>
-                    <li><a href="/"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
-                    <li class="active"><a href="/floor-plan"><i class="fas fa-map"></i> <span>Floor Plan</span></a></li>
-                    <li><a href="/orders"><i class="fas fa-utensils"></i> <span>Orders</span></a></li>
-                    <li><a href="/residents"><i class="fas fa-users"></i> <span>Residents</span></a></li>
-                    <li><a href="/kds"><i class="fas fa-tv"></i> <span>Kitchen Display</span></a></li>
-                </ul>
-            </nav>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <header>
-                <h1>Floor Plan</h1>
-                <div class="header-actions">
-                    <button id="edit-mode-btn" class="btn"><i class="fas fa-edit"></i> Edit Floor Plan</button>
-                    <button id="save-floor-plan" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
-                </div>
-            </header>
-
-            <div class="floor-plan-container">
-                <div class="floor-plan-controls">
-                    <div class="control-group">
-                        <label>Table Type:</label>
-                        <select id="table-type">
-                            <option value="round-2">Round (2)</option>
-                            <option value="round-4">Round (4)</option>
-                            <option value="square-2">Square (2)</option>
-                            <option value="square-4">Square (4)</option>
-                            <option value="rect-4">Rectangle (4)</option>
-                            <option value="rect-6">Rectangle (6)</option>
-                            <option value="rect-8">Rectangle (8)</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <button id="add-table" class="btn"><i class="fas fa-plus"></i> Add Table</button>
-                        <button id="remove-table" class="btn btn-danger"><i class="fas fa-trash"></i> Remove</button>
-                    </div>
-                </div>
-
-                <div class="floor-plan-wrapper">
-                    <div id="floor-plan" class="floor-plan">
-                        <!-- Tables will be added dynamically -->
-                    </div>
-                </div>
-
-                <div class="floor-plan-legend">
-                    <div class="legend-item">
-                        <span class="table-status available"></span>
-                        <span>Available</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="table-status occupied"></span>
-                        <span>Occupied</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="table-status order-in-progress"></span>
-                        <span>Order in Progress</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="table-status order-ready"></span>
-                        <span>Order Ready</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="container">
+        <h1>Floor Plan</h1>
+        <p>Redirecting to the React application...</p>
+        <a href="http://localhost:3000/tables" class="button">Go to Tables View</a>
     </div>
-
-    <!-- Table Selection Modal -->
-    <div id="table-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Table <span id="selected-table-number"></span></h2>
-            <p>Status: <span id="selected-table-status">Available</span></p>
-            <div class="modal-actions">
-                <button id="start-order-btn" class="btn btn-primary"><i class="fas fa-microphone"></i> Start Voice Order</button>
-                <button id="view-order-btn" class="btn"><i class="fas fa-clipboard-list"></i> View Orders</button>
-                <button id="close-modal-btn" class="btn btn-secondary"><i class="fas fa-times"></i> Close</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/js/floor-plan.js"></script>
+    <script>
+        // Redirect to the React app
+        window.location.href = "http://localhost:3000/tables";
+    </script>
 </body>
-</html>
+</html> 

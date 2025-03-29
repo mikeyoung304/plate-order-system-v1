@@ -63,9 +63,9 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(api_router)
 
 # API key from environment variable
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    logger.warning("OPENAI_API_KEY not set in environment variables")
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
+if not DEEPGRAM_API_KEY:
+    logger.warning("DEEPGRAM_API_KEY not set in environment variables")
 
 # Health check endpoint
 @app.get("/health")

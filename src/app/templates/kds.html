@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Display System - Plate Order System</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/kds.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="kds-body">
+    <div class="kds-container">
+        <!-- KDS Header -->
+        <header class="kds-header">
+            <div class="kds-branding">
+                <h1><i class="fas fa-utensils"></i> Plate KDS</h1>
+            </div>
+            <div class="kds-controls">
+                <button id="kds-fullscreen" class="btn"><i class="fas fa-expand"></i></button>
+                <div class="kds-view-selector">
+                    <button class="btn active" data-view="grid"><i class="fas fa-th"></i></button>
+                    <button class="btn" data-view="list"><i class="fas fa-list"></i></button>
+                </div>
+                <select id="kds-filter" class="kds-filter">
+                    <option value="all">All Orders</option>
+                    <option value="pending" selected>Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="ready">Ready</option>
+                </select>
+                <a href="/" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to App</a>
+            </div>
+        </header>
+
+        <!-- KDS Main Content -->
+        <div class="kds-main">
+            <div id="kds-grid" class="kds-grid">
+                <!-- Orders will be rendered here dynamically -->
+                <!-- Example order card structure -->
+                <div class="kds-card" data-order-id="1" data-status="pending">
+                    <div class="kds-card-header">
+                        <span class="kds-table">Table 12</span>
+                        <span class="kds-time">12:34 PM</span>
+                        <span class="kds-status">Pending</span>
+                    </div>
+                    <div class="kds-card-body">
+                        <p>1 Pureed Chicken - Low Sodium</p>
+                    </div>
+                    <div class="kds-card-footer">
+                        <button class="btn btn-sm kds-btn-start"><i class="fas fa-play"></i> Start</button>
+                        <button class="btn btn-sm kds-btn-ready"><i class="fas fa-check"></i> Ready</button>
+                        <button class="btn btn-sm kds-btn-flag"><i class="fas fa-flag"></i> Flag</button>
+                    </div>
+                </div>
+                <!-- End example card -->
+            </div>
+        </div>
+
+        <!-- KDS Footer -->
+        <footer class="kds-footer">
+            <div class="kds-stats">
+                <div class="kds-stat">
+                    <span id="pending-count">0</span>
+                    <label>Pending</label>
+                </div>
+                <div class="kds-stat">
+                    <span id="in-progress-count">0</span>
+                    <label>In Progress</label>
+                </div>
+                <div class="kds-stat">
+                    <span id="ready-count">0</span>
+                    <label>Ready</label>
+                </div>
+                <div class="kds-stat">
+                    <span id="total-count">0</span>
+                    <label>Total</label>
+                </div>
+            </div>
+            <div class="kds-actions">
+                <button id="kds-refresh" class="btn btn-secondary">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <span id="kds-status">Connected</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Flag Order Modal -->
+    <div id="flag-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Flag Order</h2>
+            <p>Please provide a reason for flagging this order:</p>
+            <select id="flag-reason">
+                <option value="out-of-stock">Item Out of Stock</option>
+                <option value="clarification">Need Clarification</option>
+                <option value="substitution">Substitution Required</option>
+                <option value="dietary-concern">Dietary Concern</option>
+                <option value="other">Other</option>
+            </select>
+            <textarea id="flag-notes" placeholder="Additional notes..."></textarea>
+            <div class="modal-actions">
+                <button id="confirm-flag" class="btn btn-primary">Confirm</button>
+                <button id="cancel-flag" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/kds.js"></script>
+</body>
+</html>

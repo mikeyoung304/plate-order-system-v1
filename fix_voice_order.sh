@@ -12,6 +12,7 @@ import uvicorn
 import os
 import logging
 from dotenv import load_dotenv
+import sys
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,15 +34,15 @@ if __name__ == "__main__":
     # Log startup info
     logger.info(f"Starting server on port {port} in {env} mode")
     
-    # Check if OpenAI API key is set
-    api_key = os.environ.get('OPENAI_API_KEY')
+    # Check if Deepgram API key is set
+    api_key = os.environ.get('DEEPGRAM_API_KEY')
     if not api_key:
-        logger.error("OPENAI_API_KEY not set in environment variables")
-        logger.error("Voice transcription will not work without an OpenAI API key")
-        exit(1)
+        logger.error("DEEPGRAM_API_KEY not set in environment variables")
+        logger.error("Voice transcription will not work without a Deepgram API key")
+        sys.exit(1)
     else:
-        logger.info("OPENAI_API_KEY is set in environment variables")
-        logger.info("Using OpenAI Whisper API for voice transcription")
+        logger.info("DEEPGRAM_API_KEY is set in environment variables")
+        logger.info("Using Deepgram API for voice transcription")
     
     # Set reload based on environment
     reload = env == "development"
@@ -60,5 +61,5 @@ EOF
 chmod +x temp_run.py
 
 # Run the server
-echo "Starting server with OpenAI Whisper API..."
+echo "Starting server with Deepgram API..."
 python temp_run.py

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../utils/api';
 import axios from 'axios';
 import Draggable from 'react-draggable';
 import { debug } from '../utils/debug';
@@ -27,7 +28,6 @@ interface Table {
 
 type TableStatus = 'available' | 'occupied' | 'reserved';
 type TableShape = 'square' | 'rectangle' | 'circle';
-type TableType = 'standard' | 'booth' | 'high-top' | 'outdoor';
 
 interface TableLayout {
   width: number;
@@ -60,55 +60,57 @@ const DEFAULT_NEW_TABLE: Partial<Table> = {
   height: DEFAULT_TABLE_SIZE.SQUARE.height,
 };
 
-const TABLE_TYPES: TableType[] = ['standard', 'booth', 'high-top', 'outdoor'];
+// Utility functions
+const getTableColor = (status: Table['status']) => {
+  switch (status) {
+    case 'available':
+      return 'bg-green-100 border-green-500';
+    case 'occupied':
+      return 'bg-red-100 border-red-500';
+    case 'reserved':
+      return 'bg-yellow-100 border-yellow-500';
+    default:
+      return 'bg-gray-100 border-gray-500';
+  }
+};
+
+const getTableShape = (table: Table) => {
+  switch (table.shape) {
+    case 'circle':
+      return 'rounded-full';
+    case 'rectangle':
+      return 'rounded-lg';
+    default:
+      return 'rounded-lg';
+  }
+};
 
 // Components
-const TableShapeButton: React.FC<{
-  shape: TableShape;
-  selected: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}> = ({ shape, selected, onClick, icon, label }) => (
-  <button
-    onClick={onClick}
-    className={`p-4 rounded-lg border ${
-      selected
-        ? 'border-blue-500 bg-blue-50 text-blue-700'
-        : 'border-gray-200 hover:border-blue-500'
-    }`}
-    aria-label={`Select ${label} shape`}
-    aria-pressed={selected}
-  >
-    {icon}
-    <span className="block mt-2">{label}</span>
-  </button>
-);
-
 const DraggableTable: React.FC<TableProps> = ({ table, onTableClick, onDragStop }) => {
   const nodeRef = useRef(null);
   
-  const statusStyles = {
-    available: 'bg-green-100 border-green-500',
-    occupied: 'bg-red-100 border-red-500',
-    reserved: 'bg-yellow-100 border-yellow-500',
+  const handleDragStop = (e: any, data: any) => {
+    // Snap to grid (20px grid)
+    const snappedX = Math.round(data.x / 20) * 20;
+    const snappedY = Math.round(data.y / 20) * 20;
+    onDragStop(table, snappedX, snappedY);
   };
   
   return (
     <Draggable
       nodeRef={nodeRef}
       defaultPosition={{ x: table.x, y: table.y }}
-      onStop={(e, data) => onDragStop(table, data.x, data.y)}
+      onStop={handleDragStop}
       bounds="parent"
+      grid={[20, 20]}
     >
       <div
         ref={nodeRef}
         onClick={() => onTableClick(table)}
-        className={`absolute cursor-move p-4 rounded-lg border-2 ${statusStyles[table.status]}`}
+        className={`absolute cursor-move p-4 border-2 ${getTableColor(table.status)} ${getTableShape(table)}`}
         style={{
           width: table.width,
           height: table.height,
-          borderRadius: table.shape === 'circle' ? '50%' : undefined,
         }}
         role="button"
         aria-label={`Table ${table.number} - ${table.seats} seats - ${table.status}`}
@@ -146,7 +148,7 @@ export const TableManagement: React.FC = () => {
     queryKey: ['table-layout'],
     queryFn: async () => {
       debug.logApiCall('/api/tables/layout', 'GET', {}, DEBUG_OPTIONS);
-      const response = await axios.get('/api/tables/layout');
+      const response = await api.get('/api/tables/layout');
       debug.info('Table layout fetched successfully', DEBUG_OPTIONS);
       return response.data;
     },
@@ -165,7 +167,7 @@ export const TableManagement: React.FC = () => {
   const createTableMutation = useMutation({
     mutationFn: async (table: Partial<Table>) => {
       debug.logApiCall('/api/tables', 'POST', table, DEBUG_OPTIONS);
-      const response = await axios.post('/api/tables', table);
+      const response = await api.post('/api/tables', table);
       debug.info('Table created successfully', DEBUG_OPTIONS);
       return response.data;
     },
@@ -185,7 +187,7 @@ export const TableManagement: React.FC = () => {
   const updateTableMutation = useMutation({
     mutationFn: async (table: Table) => {
       debug.logApiCall(`/api/tables/${table.id}`, 'PUT', table, DEBUG_OPTIONS);
-      const response = await axios.put(`/api/tables/${table.id}`, table);
+      const response = await api.put(`/api/tables/${table.id}`, table);
       debug.info('Table updated successfully', DEBUG_OPTIONS);
       return response.data;
     },
@@ -204,7 +206,7 @@ export const TableManagement: React.FC = () => {
   const deleteTableMutation = useMutation({
     mutationFn: async (tableId: number) => {
       debug.logApiCall(`/api/tables/${tableId}`, 'DELETE', {}, DEBUG_OPTIONS);
-      await axios.delete(`/api/tables/${tableId}`);
+      await api.delete(`/api/tables/${tableId}`);
       debug.info('Table deleted successfully', DEBUG_OPTIONS);
     },
     onSuccess: () => {
@@ -220,12 +222,14 @@ export const TableManagement: React.FC = () => {
 
   const handleTableClick = (table: Table) => {
     debug.debug(`Table ${table.id} clicked`, DEBUG_OPTIONS);
+    debug.logState({ selectedTable: table }, DEBUG_OPTIONS);
     setSelectedTable(table);
   };
 
   const handleSaveTable = () => {
     if (selectedTable) {
       debug.debug(`Saving changes for table ${selectedTable.id}`, DEBUG_OPTIONS);
+      debug.logState({ tableToUpdate: selectedTable }, DEBUG_OPTIONS);
       updateTableMutation.mutate(selectedTable);
     }
   };
@@ -236,6 +240,7 @@ export const TableManagement: React.FC = () => {
     
     if (!newTable.number || !newTable.seats || !newTable.shape) {
       debug.warn('Missing required fields for new table', DEBUG_OPTIONS);
+      debug.logState({ newTable, missingFields: { number: !newTable.number, seats: !newTable.seats, shape: !newTable.shape } }, DEBUG_OPTIONS);
       alert('Please fill in all required fields');
       return;
     }
@@ -257,6 +262,7 @@ export const TableManagement: React.FC = () => {
   const handleDeleteTable = () => {
     if (selectedTable) {
       debug.debug(`Attempting to delete table ${selectedTable.id}`, DEBUG_OPTIONS);
+      debug.logState({ tableToDelete: selectedTable }, DEBUG_OPTIONS);
       if (window.confirm('Are you sure you want to delete this table?')) {
         deleteTableMutation.mutate(selectedTable.id);
       }
@@ -265,35 +271,12 @@ export const TableManagement: React.FC = () => {
 
   const handleDragStop = (table: Table, x: number, y: number) => {
     debug.debug(`Table ${table.id} dragged to position (${x}, ${y})`, DEBUG_OPTIONS);
+    debug.logState({ table, newPosition: { x, y } }, DEBUG_OPTIONS);
     updateTableMutation.mutate({
       ...table,
       x: Math.round(x),
       y: Math.round(y),
     });
-  };
-
-  const getTableColor = (status: Table['status']) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'occupied':
-        return 'bg-red-100 text-red-800';
-      case 'reserved':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getTableShape = (table: Table) => {
-    switch (table.shape) {
-      case 'circle':
-        return 'rounded-full';
-      case 'rectangle':
-        return 'rounded-lg';
-      default:
-        return 'rounded-lg';
-    }
   };
 
   if (layoutError) {
@@ -320,7 +303,7 @@ export const TableManagement: React.FC = () => {
           </button>
         </div>
 
-        <div className="relative border rounded-lg p-4" style={{ width: 800, height: 600 }}>
+        <div className="relative border rounded-lg p-4 w-full h-[600px] overflow-hidden">
           {layout?.tables?.map((table: Table) => (
             <DraggableTable
               key={table.id}
@@ -515,7 +498,15 @@ export const TableManagement: React.FC = () => {
                 </label>
                 <div className="mt-2 grid grid-cols-3 gap-4">
                   <button
-                    onClick={() => setSelectedTable({ ...selectedTable, shape: 'square' })}
+                    onClick={() => {
+                      const newShape = 'square';
+                      setSelectedTable({
+                        ...selectedTable,
+                        shape: newShape,
+                        width: DEFAULT_TABLE_SIZE.SQUARE.width,
+                        height: DEFAULT_TABLE_SIZE.SQUARE.height,
+                      });
+                    }}
                     className={`p-4 rounded-lg border ${
                       selectedTable.shape === 'square'
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -526,7 +517,15 @@ export const TableManagement: React.FC = () => {
                     Square
                   </button>
                   <button
-                    onClick={() => setSelectedTable({ ...selectedTable, shape: 'rectangle' })}
+                    onClick={() => {
+                      const newShape = 'rectangle';
+                      setSelectedTable({
+                        ...selectedTable,
+                        shape: newShape,
+                        width: DEFAULT_TABLE_SIZE.RECTANGLE.width,
+                        height: DEFAULT_TABLE_SIZE.RECTANGLE.height,
+                      });
+                    }}
                     className={`p-4 rounded-lg border ${
                       selectedTable.shape === 'rectangle'
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -537,7 +536,15 @@ export const TableManagement: React.FC = () => {
                     Rectangle
                   </button>
                   <button
-                    onClick={() => setSelectedTable({ ...selectedTable, shape: 'circle' })}
+                    onClick={() => {
+                      const newShape = 'circle';
+                      setSelectedTable({
+                        ...selectedTable,
+                        shape: newShape,
+                        width: DEFAULT_TABLE_SIZE.CIRCLE.width,
+                        height: DEFAULT_TABLE_SIZE.CIRCLE.height,
+                      });
+                    }}
                     className={`p-4 rounded-lg border ${
                       selectedTable.shape === 'circle'
                         ? 'border-blue-500 bg-blue-50 text-blue-700'

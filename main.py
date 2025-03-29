@@ -18,6 +18,11 @@ from app.api.middleware.error_handler import (
 )
 from app.api.middleware.logging_middleware import logging_middleware
 
+# Import new API routers
+from app.api.meal_period import router as meal_period_router
+from app.api.daily_specials import router as daily_specials_router
+from app.api.quick_orders import router as quick_orders_router
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -52,14 +57,19 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(api_router) # REST APIs
 app.include_router(listen_router) # WebSocket for Deepgram
 
+# Include new API routers
+app.include_router(meal_period_router)
+app.include_router(daily_specials_router)
+app.include_router(quick_orders_router)
+
 # API key from environment variable
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    logger.warning("OPENAI_API_KEY not set in environment variables")
-    logger.warning("Voice transcription will not work without an OpenAI API key")
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
+if not DEEPGRAM_API_KEY:
+    logger.warning("DEEPGRAM_API_KEY not set in environment variables")
+    logger.warning("Voice transcription will not work without a Deepgram API key")
 else:
-    logger.info("OPENAI_API_KEY is set in environment variables")
-    logger.info("Using OpenAI Whisper API for voice transcription")
+    logger.info("DEEPGRAM_API_KEY is set in environment variables")
+    logger.info("Using Deepgram API for voice transcription")
 
 # Health check endpoint
 @app.get("/health")

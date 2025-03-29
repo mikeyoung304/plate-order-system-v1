@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import api from '../utils/api';
 import axios from 'axios';
+import { debug } from '../utils/debug';
 import {
   ClipboardDocumentListIcon,
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
+
+// Define debug options
+const DEBUG_OPTIONS = { component: 'Dashboard', timestamp: true };
 
 interface DashboardStats {
   total_orders: number;
@@ -25,22 +30,30 @@ interface RecentOrder {
 }
 
 export const Dashboard: React.FC = () => {
-  // Fetch dashboard stats
-  const { data: stats } = useQuery<DashboardStats>({
+  // Fetch dashboard statistics
+  const { data: stats, isLoading: isLoadingStats } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const response = await axios.get('/api/dashboard/stats');
+      debug.logApiCall('/api/dashboard/stats', 'GET', {}, DEBUG_OPTIONS);
+      const response = await api.get('/api/dashboard/stats');
+      debug.info('Dashboard stats fetched successfully', DEBUG_OPTIONS);
       return response.data;
     },
+    retry: 2,
+    refetchInterval: 60000, // Refresh every minute
   });
 
   // Fetch recent orders
-  const { data: recentOrders } = useQuery<RecentOrder[]>({
+  const { data: recentOrders, isLoading: isLoadingOrders } = useQuery<RecentOrder[]>({
     queryKey: ['recent-orders'],
     queryFn: async () => {
-      const response = await axios.get('/api/orders/recent');
+      debug.logApiCall('/api/orders/recent', 'GET', {}, DEBUG_OPTIONS);
+      const response = await api.get('/api/orders/recent');
+      debug.info('Recent orders fetched successfully', DEBUG_OPTIONS);
       return response.data;
     },
+    retry: 2,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const statCards = [
@@ -102,46 +115,36 @@ export const Dashboard: React.FC = () => {
           </h3>
         </div>
         <div className="border-t border-gray-200">
-          <ul role="list" className="divide-y divide-gray-200">
-            {recentOrders?.map((order) => (
-              <li key={order.id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <ClipboardDocumentListIcon
-                        className="h-6 w-6 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-3">
+          <div className="mt-6">
+            <h3 className="text-lg font-medium text-gray-900">Recent Orders</h3>
+            <ul className="mt-4 divide-y divide-gray-200">
+              {recentOrders?.map((order) => (
+                <li key={order.id} className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Table {order.table_id} - Seat {order.seat_number}
+                        Order #{order.id}
                       </p>
-                      <p className="text-sm text-gray-500">{order.details}</p>
+                      <p className="text-sm text-gray-500">
+                        {order.details}
+                      </p>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        order.status === 'confirmed'
-                          ? 'bg-green-100 text-green-800'
-                          : order.status === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      order.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
                       {order.status}
                     </span>
-                    <p className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleString()}
-                    </p>
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   );
-}; 
+};
+
+export default Dashboard; 

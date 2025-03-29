@@ -28,14 +28,14 @@ class SpeechService:
     """
     
     def __init__(self):
-        # Check for OpenAI API key
-        self.api_key = os.environ.get("OPENAI_API_KEY")
+        # Check for Deepgram API key
+        self.api_key = os.environ.get("DEEPGRAM_API_KEY")
         if not self.api_key:
-            logger.warning("OPENAI_API_KEY not set in environment variables")
+            logger.warning("DEEPGRAM_API_KEY not set in environment variables")
     
     def transcribe_audio(self, audio_file: BinaryIO) -> Dict[str, Any]:
         """
-        Transcribe audio using OpenAI Whisper API
+        Transcribe audio using Deepgram API
         
         Args:
             audio_file: Binary file-like object containing audio data
@@ -44,23 +44,23 @@ class SpeechService:
             Dictionary with transcription result
         """
         try:
-            # In a real implementation, this would use the OpenAI API
+            # In a real implementation, this would use the Deepgram API
             # For now, we'll return a placeholder response
             logger.info("Processing audio file")
             
             # Placeholder for actual API call
             if self.api_key:
                 # This would be an actual API call in production
-                # import openai
-                # openai.api_key = self.api_key
-                # response = openai.Audio.transcribe("whisper-1", audio_file)
-                # return {"success": True, "text": response["text"]}
+                # import deepgram
+                # dg = deepgram.Deepgram(self.api_key)
+                # response = dg.transcribe(audio_file)
+                # return response
                 
                 # Placeholder response
                 return {"success": True, "text": "This is a placeholder transcription."}
             else:
-                logger.error("Cannot transcribe: OpenAI API key not set")
-                return {"success": False, "error": "OpenAI API key not set"}
+                logger.error("Cannot transcribe: Deepgram API key not set")
+                return {"success": False, "error": "Deepgram API key not set"}
                 
         except Exception as e:
             logger.error(f"Error transcribing audio: {str(e)}")
@@ -77,7 +77,7 @@ class SpeechService:
             Transcription text
         """
         try:
-            # In a real implementation, this would decode the base64 data and use the OpenAI API
+            # In a real implementation, this would decode the base64 data and use the Deepgram API
             # For now, we'll return a placeholder response
             logger.info(f"Processing audio data of length: {len(audio_data)}")
             
@@ -281,9 +281,9 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(api_router)
 
 # API key from environment variable
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    logger.warning("OPENAI_API_KEY not set in environment variables")
+DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
+if not DEEPGRAM_API_KEY:
+    logger.warning("DEEPGRAM_API_KEY not set in environment variables")
 
 # Health check endpoint
 @app.get("/health")

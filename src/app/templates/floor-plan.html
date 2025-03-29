@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floor Plan - Plate Order System</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/floor-plan.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="logo">Plate</div>
+            <nav>
+                <ul>
+                    <li><a href="/"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                    <li class="active"><a href="/floor-plan"><i class="fas fa-map"></i> <span>Floor Plan</span></a></li>
+                    <li><a href="/orders"><i class="fas fa-utensils"></i> <span>Orders</span></a></li>
+                    <li><a href="/residents"><i class="fas fa-users"></i> <span>Residents</span></a></li>
+                    <li><a href="/kds"><i class="fas fa-tv"></i> <span>Kitchen Display</span></a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                <h1>Floor Plan</h1>
+                <div class="header-actions">
+                    <button id="edit-mode-btn" class="btn"><i class="fas fa-edit"></i> Edit Floor Plan</button>
+                    <button id="save-floor-plan" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </header>
+
+            <div class="floor-plan-container">
+                <div class="floor-plan-controls">
+                    <div class="control-group">
+                        <label>Table Type:</label>
+                        <select id="table-type">
+                            <option value="round-2">Round (2)</option>
+                            <option value="round-4">Round (4)</option>
+                            <option value="square-2">Square (2)</option>
+                            <option value="square-4">Square (4)</option>
+                            <option value="rect-4">Rectangle (4)</option>
+                            <option value="rect-6">Rectangle (6)</option>
+                            <option value="rect-8">Rectangle (8)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <button id="add-table" class="btn"><i class="fas fa-plus"></i> Add Table</button>
+                        <button id="remove-table" class="btn btn-danger"><i class="fas fa-trash"></i> Remove</button>
+                    </div>
+                </div>
+
+                <div class="floor-plan-wrapper">
+                    <div id="floor-plan" class="floor-plan">
+                        <!-- Tables will be added dynamically -->
+                    </div>
+                </div>
+
+                <div class="floor-plan-legend">
+                    <div class="legend-item">
+                        <span class="table-status available"></span>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="table-status occupied"></span>
+                        <span>Occupied</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="table-status order-in-progress"></span>
+                        <span>Order in Progress</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="table-status order-ready"></span>
+                        <span>Order Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Selection Modal -->
+    <div id="table-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Table <span id="selected-table-number"></span></h2>
+            <p>Status: <span id="selected-table-status">Available</span></p>
+            <div class="modal-actions">
+                <button id="start-order-btn" class="btn btn-primary"><i class="fas fa-microphone"></i> Start Voice Order</button>
+                <button id="view-order-btn" class="btn"><i class="fas fa-clipboard-list"></i> View Orders</button>
+                <button id="close-modal-btn" class="btn btn-secondary"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/floor-plan.js"></script>
+</body>
+</html>

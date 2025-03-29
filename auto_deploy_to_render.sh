@@ -21,7 +21,7 @@ echo "Changes pushed to GitHub. Render should automatically detect and deploy th
 echo "Please check your Render dashboard to monitor the deployment progress."
 echo ""
 echo "Important: Make sure the following environment variables are set in Render:"
-echo "- OPENAI_API_KEY: Your OpenAI API key"
+echo "- DEEPGRAM_API_KEY: Your Deepgram API key"
 echo "- ADMIN_USERNAME: Admin username for the dashboard"
 echo "- ADMIN_PASSWORD: Admin password for the dashboard"
 echo ""

@@ -53,12 +53,12 @@ def create_sample_data():
     
     # Create sample tables
     tables = [
-        Table(number=1, type="round-4", x=100, y=100),
-        Table(number=2, type="round-4", x=300, y=100),
-        Table(number=3, type="square-2", x=500, y=100),
-        Table(number=4, type="square-2", x=100, y=300),
-        Table(number=5, type="round-6", x=300, y=300),
-        Table(number=6, type="round-6", x=500, y=300)
+        Table(number=1, type="round-4", x=100, y=100, seats=4, shape="round", width=100, height=100, status="available"),
+        Table(number=2, type="round-4", x=300, y=100, seats=4, shape="round", width=100, height=100, status="available"),
+        Table(number=3, type="square-2", x=500, y=100, seats=2, shape="square", width=80, height=80, status="available"),
+        Table(number=4, type="square-2", x=100, y=300, seats=2, shape="square", width=80, height=80, status="available"),
+        Table(number=5, type="round-6", x=300, y=300, seats=6, shape="round", width=120, height=120, status="available"),
+        Table(number=6, type="round-6", x=500, y=300, seats=6, shape="round", width=120, height=120, status="available")
     ]
     
     db.add_all(tables)

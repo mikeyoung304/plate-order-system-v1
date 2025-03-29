@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to clean up duplicate structure and set up OpenAI API key
+# Script to clean up duplicate structure and set up Deepgram API key
 echo "Starting cleanup and setup process..."
 
 # 1. Clean up duplicate structure
@@ -27,9 +27,9 @@ else
     echo "No duplicate directory found. Skipping cleanup."
 fi
 
-# 2. Set up OpenAI API key
-echo "Setting up OpenAI API key..."
-echo "Please enter your OpenAI API key:"
+# 2. Set up Deepgram API key
+echo "Setting up Deepgram API key..."
+echo "Please enter your Deepgram API key:"
 read api_key
 
 if [ -z "$api_key" ]; then
@@ -40,22 +40,22 @@ else
         touch .env
     fi
 
-    # Check if OPENAI_API_KEY already exists in .env
-    if grep -q "OPENAI_API_KEY" .env; then
-        # Replace existing key
-        sed -i '' "s/OPENAI_API_KEY=.*/OPENAI_API_KEY=$api_key/" .env
+    # Check if DEEPGRAM_API_KEY already exists in .env
+    if grep -q "DEEPGRAM_API_KEY" .env; then
+        # Update existing key
+        sed -i '' "s/DEEPGRAM_API_KEY=.*/DEEPGRAM_API_KEY=$api_key/" .env
     else
         # Add new key
-        echo "OPENAI_API_KEY=$api_key" >> .env
+        echo "DEEPGRAM_API_KEY=$api_key" >> .env
     fi
     echo "API key added to .env file."
 
     # Update run_server.sh to include the API key
     if [ -f "run_server.sh" ]; then
-        if ! grep -q "OPENAI_API_KEY" run_server.sh; then
-            # Add API key to run_server.sh before the python command
-            sed -i '' '/python run.py/i\\
-export OPENAI_API_KEY=$OPENAI_API_KEY\\
+        if ! grep -q "DEEPGRAM_API_KEY" run_server.sh; then
+            # Add export statement
+            sed -i.bak '/^export/a\
+export DEEPGRAM_API_KEY=$DEEPGRAM_API_KEY\\
 ' run_server.sh
             echo "API key setup added to run_server.sh."
         else
@@ -69,7 +69,7 @@ export OPENAI_API_KEY=$OPENAI_API_KEY\\
 pkill -f "python run.py" || true
 # Set environment variables
 export PORT=8001
-export OPENAI_API_KEY=$api_key
+export DEEPGRAM_API_KEY=$api_key
 # Start the server in the background
 nohup python run.py > server.log 2>&1 &
 echo "Server started in background on port 8001. Check server.log for output."
@@ -79,14 +79,14 @@ EOF
     fi
 fi
 
-# 3. Create a test script for the OpenAI API
-echo "Creating OpenAI API test script..."
-cat > test_openai.py << 'EOF'
+# 3. Create a test script for the Deepgram API
+echo "Creating Deepgram API test script..."
+cat > test_deepgram.py << 'EOF'
 import os
-import openai
+import deepgram
 
 # Print the API key (first few characters only for security)
-api_key = os.environ.get("OPENAI_API_KEY", "")
+api_key = os.environ.get("DEEPGRAM_API_KEY", "")
 if api_key:
     print(f"API key found: {api_key[:5]}...")
 else:
@@ -94,14 +94,10 @@ else:
 
 # Test a simple API call
 try:
-    openai.api_key = api_key
-    response = openai.Completion.create(
-        model="gpt-3.5-turbo-instruct",
-        prompt="Hello, world!",
-        max_tokens=5
-    )
+    dg = deepgram.Deepgram(api_key)
+    response = dg.transcribe(audio_file)
     print("API test successful!")
-    print(f"Response: {response.choices[0].text}")
+    print(f"Response: {response}")
 except Exception as e:
     print(f"API test failed: {str(e)}")
 EOF
@@ -109,4 +105,4 @@ EOF
 echo "Setup complete!"
 echo "You can now run the following commands:"
 echo "1. ./run_server.sh - to start the server with the API key"
-echo "2. python test_openai.py - to test the OpenAI API key"
+echo "2. python test_deepgram.py - to test the Deepgram API key"

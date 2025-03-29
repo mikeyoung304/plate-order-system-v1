@@ -6,7 +6,7 @@ This guide will walk you through the process of deploying your Plate Order Syste
 
 1. A GitHub account
 2. A Render.com account (you can sign up for free at https://render.com)
-3. Your OpenAI API key (for voice recognition features)
+3. Your Deepgram API key (for voice recognition features)
 
 ## Step 1: Push Your Code to GitHub
 
@@ -41,7 +41,7 @@ git push -u origin main
 6. Render will automatically detect the `render.yaml` file and configure your services
 7. Click "Apply" to create the services defined in the YAML file
 8. Set your environment variables:
-   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `DEEPGRAM_API_KEY`: Your Deepgram API key
    - `ADMIN_PASSWORD`: A secure password for the admin interface
 
 ### Option 2: Manual Deployment
@@ -58,7 +58,7 @@ git push -u origin main
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 6. Under "Environment Variables", add:
-   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `DEEPGRAM_API_KEY`: Your Deepgram API key
    - `ADMIN_USERNAME`: admin
    - `ADMIN_PASSWORD`: A secure password for the admin interface
 7. Click "Create Web Service"

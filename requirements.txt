@@ -1,7 +1,36 @@
-# FastAPI and ASGI server
-fastapi==0.103.1
-uvicorn==0.23.2
-gunicorn==21.2.0
+# Core dependencies
+fastapi>=0.68.0
+uvicorn>=0.15.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=0.19.0
+sqlalchemy>=1.4.0
+alembic>=1.7.0
+
+# Audio processing
+pyaudio>=0.2.11
+wave>=0.0.2
+
+# API and networking
+aiohttp>=3.8.0
+tenacity>=8.0.0
+redis>=4.0.0
+
+# Monitoring and metrics
+prometheus-client>=0.12.0
+sentry-sdk>=1.5.0
+
+# Testing
+pytest>=6.2.5
+pytest-asyncio>=0.16.0
+pytest-cov>=2.12.1
+httpx>=0.23.0
+
+# Development
+black>=21.7b0
+isort>=5.9.3
+flake8>=3.9.2
+mypy>=0.910
 
 # Environment and configuration
 python-dotenv==1.0.0
@@ -20,7 +49,6 @@ python-multipart==0.0.6
 
 # Web and API
 websockets==11.0.3
-httpx==0.24.1
 aiofiles==23.1.0
 jinja2==3.1.2
 itsdangerous==2.1.2
@@ -30,10 +58,6 @@ requests==2.31.0
 numpy==1.25.2
 pandas==2.1.0
 python-dateutil==2.8.2
-
-# Testing
-pytest==7.4.0
-pytest-asyncio==0.21.1
 
 # Speech to text (for production)
 # openai==0.28.0 # Replaced by Deepgram

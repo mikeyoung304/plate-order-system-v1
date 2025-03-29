@@ -6,14 +6,13 @@ We have successfully implemented the beyond-MVP features for the Plate Order Sys
 
 ## Features Implemented
 
-### 1. Advanced Voice Processing with OpenAI Whisper API
+### 1. Advanced Voice Processing with Deepgram API
 
-We've integrated OpenAI's Whisper API for advanced speech-to-text capabilities:
+We've integrated Deepgram's API for advanced speech-to-text capabilities:
 
-- Created a dedicated `WhisperService` class in `app/services/voice/whisper_service.py`
-- Updated the speech API endpoint in `app/api/speech.py` to use the new service
-- Added proper error handling and temporary file management
-- Ensured the OpenAI API key is loaded from environment variables
+- Created a dedicated `DeepgramService` class in `app/services/voice/deepgram_service.py`
+- Implemented real-time transcription with confidence scoring
+- Ensured the Deepgram API key is loaded from environment variables
 
 This enhancement provides more accurate voice transcription for order taking, improving the user experience for servers.
 
@@ -55,7 +54,7 @@ These security features ensure that only authorized users can access sensitive p
 The system now requires the following environment variables:
 
 ```
-OPENAI_API_KEY=your_openai_api_key_here
+DEEPGRAM_API_KEY=your_deepgram_api_key_here
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_admin_password_here
 ```

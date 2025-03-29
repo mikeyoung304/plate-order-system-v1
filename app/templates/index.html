@@ -3,173 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Plate Order System - Voice-enabled ordering for restaurants">
     <title>Plate Order System</title>
-    
-    <!-- Include Tailwind CSS from CDN for a polished look -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
+    <link rel="icon" href="/static/img/favicon.ico">
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
             background-color: #f9fafb;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #1f2937;
         }
-        
-        .view-card {
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        .container {
+            max-width: 600px;
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        
-        .view-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
         }
-        
-        .btn {
-            transition: all 0.2s ease;
+        p {
+            margin-bottom: 2rem;
+            color: #6b7280;
         }
-        
-        .btn:hover {
-            transform: translateY(-1px);
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #2563eb;
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50">
-    <header class="bg-indigo-600 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold">Plate Order System</h1>
-                <div class="flex space-x-4">
-                    <a href="#" id="view-switcher-btn" class="bg-white text-indigo-600 px-4 py-2 rounded-md font-medium hover:bg-indigo-50 transition-colors">
-                        Switch View
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
-    
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- View Switcher Modal (Hidden by default) -->
-        <div id="view-switcher-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900">Switch View</h2>
-                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 gap-4">
-                    <a href="/server-view" class="view-card bg-white border border-gray-200 rounded-lg p-6 flex items-center hover:border-indigo-500">
-                        <div class="bg-indigo-100 p-3 rounded-full mr-4">
-                            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">Server View</h3>
-                            <p class="text-sm text-gray-500">Take orders and manage tables</p>
-                        </div>
-                    </a>
-                    
-                    <a href="/kitchen-view" class="view-card bg-white border border-gray-200 rounded-lg p-6 flex items-center hover:border-green-500">
-                        <div class="bg-green-100 p-3 rounded-full mr-4">
-                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">Kitchen View</h3>
-                            <p class="text-sm text-gray-500">Manage and track orders</p>
-                        </div>
-                    </a>
-                    
-                    <a href="/admin-view" class="view-card bg-white border border-gray-200 rounded-lg p-6 flex items-center hover:border-purple-500">
-                        <div class="bg-purple-100 p-3 rounded-full mr-4">
-                            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900">Admin View</h3>
-                            <p class="text-sm text-gray-500">Manage system settings and view analytics</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Welcome Content -->
-        <div class="bg-white shadow-md rounded-lg p-8 mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Welcome to Plate Order System</h2>
-            <p class="text-gray-600 mb-6">A voice-enabled ordering system for restaurants with real-time updates between servers and kitchen staff.</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-indigo-50 p-6 rounded-lg">
-                    <h3 class="text-lg font-semibold text-indigo-700 mb-2">Voice Ordering</h3>
-                    <p class="text-gray-600">Take orders using voice recognition for faster, more accurate service.</p>
-                </div>
-                
-                <div class="bg-green-50 p-6 rounded-lg">
-                    <h3 class="text-lg font-semibold text-green-700 mb-2">Real-time Updates</h3>
-                    <p class="text-gray-600">Instant communication between servers and kitchen staff.</p>
-                </div>
-                
-                <div class="bg-purple-50 p-6 rounded-lg">
-                    <h3 class="text-lg font-semibold text-purple-700 mb-2">Analytics</h3>
-                    <p class="text-gray-600">Track performance metrics and optimize your operations.</p>
-                </div>
-            </div>
-            
-            <div class="flex justify-center">
-                <button id="get-started-btn" class="btn bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    Get Started
-                </button>
-            </div>
-        </div>
-    </main>
-    
-    <footer class="bg-white mt-12 border-t border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="text-center text-gray-500 text-sm">
-                &copy; 2025 Plate Order System. All rights reserved.
-            </div>
-        </div>
-    </footer>
-    
+<body>
+    <div class="container">
+        <h1>Plate Order System</h1>
+        <p>Welcome to the Plate Order System API server.</p>
+        <a href="http://localhost:3000" class="button">Go to Dashboard</a>
+    </div>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // View switcher modal
-            const viewSwitcherBtn = document.getElementById('view-switcher-btn');
-            const viewSwitcherModal = document.getElementById('view-switcher-modal');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            const getStartedBtn = document.getElementById('get-started-btn');
-            
-            // Open modal
-            viewSwitcherBtn.addEventListener('click', function() {
-                viewSwitcherModal.classList.remove('hidden');
-            });
-            
-            // Get started button also opens modal
-            getStartedBtn.addEventListener('click', function() {
-                viewSwitcherModal.classList.remove('hidden');
-            });
-            
-            // Close modal
-            closeModalBtn.addEventListener('click', function() {
-                viewSwitcherModal.classList.add('hidden');
-            });
-            
-            // Close modal when clicking outside
-            viewSwitcherModal.addEventListener('click', function(event) {
-                if (event.target === viewSwitcherModal) {
-                    viewSwitcherModal.classList.add('hidden');
-                }
-            });
-        });
+        // Auto-redirect to the React app
+        window.location.href = "http://localhost:3000";
     </script>
 </body>
-</html>
+</html> 
