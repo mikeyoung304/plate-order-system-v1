@@ -1,0 +1,61 @@
+name: CI Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12' # Match the version we installed locally
+
+    - name: Install Python dependencies
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install dev dependencies if they are separate and needed for checks
+        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Use a recent LTS version
+
+    - name: Install Node dependencies
+      run: npm ci # Use clean install for CI
+
+    - name: Lint with Flake8
+      run: |
+        source venv/bin/activate
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check formatting with Black
+      run: |
+        source venv/bin/activate
+        black --check .
+
+    - name: Lint with ESLint
+      run: npx eslint "frontend/src/**/*.{ts,tsx}"
+
+    - name: Check formatting with Prettier
+      run: npx prettier --check "frontend/**/*.{ts,tsx,js,jsx,json,css,md}"
+
+    - name: Run Pytest
+      run: |
+        source venv/bin/activate
+        pytest
