@@ -1,61 +1,69 @@
-name: CI Checks
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
-  build-and-test:
+  backend-checks:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Lint with Flake8
+        run: |
+          pip install flake8
+          flake8 src/ tests/
+      
+      - name: Check formatting with Black
+        run: |
+          pip install black
+          black --check src/ tests/
+      
+      - name: Type check with MyPy
+        run: |
+          pip install mypy
+          mypy src/
+      
+      - name: Run Python tests
+        run: |
+          pip install pytest
+          pytest tests/
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12' # Match the version we installed locally
-
-    - name: Install Python dependencies
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
-        # Install dev dependencies if they are separate and needed for checks
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20' # Use a recent LTS version
-
-    - name: Install Node dependencies
-      run: npm ci # Use clean install for CI
-
-    - name: Lint with Flake8
-      run: |
-        source venv/bin/activate
-        # Stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-    - name: Check formatting with Black
-      run: |
-        source venv/bin/activate
-        black --check .
-
-    - name: Lint with ESLint
-      run: npx eslint "frontend/src/**/*.{ts,tsx}"
-
-    - name: Check formatting with Prettier
-      run: npx prettier --check "frontend/**/*.{ts,tsx,js,jsx,json,css,md}"
-
-    - name: Run Pytest
-      run: |
-        source venv/bin/activate
-        pytest
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      
+      - name: Install Node.js dependencies
+        run: npm ci
+      
+      - name: Lint with ESLint
+        run: |
+          npx eslint "frontend/src/**/*.{ts,tsx}"
+      
+      - name: Check formatting with Prettier
+        run: |
+          npx prettier --check "frontend/src/**/*.{ts,tsx,js,jsx,css,html}"
+      
+      - name: Run frontend tests
+        run: npm test

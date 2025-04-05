@@ -1,0 +1,152 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to production'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Lint with Flake8
+        run: |
+          pip install flake8
+          flake8 src/ tests/
+      
+      - name: Check formatting with Black
+        run: |
+          pip install black
+          black --check src/ tests/
+      
+      - name: Type check with MyPy
+        run: |
+          pip install mypy
+          mypy src/
+      
+      - name: Run Python tests
+        run: |
+          pip install pytest
+          pytest tests/
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      
+      - name: Install Node.js dependencies
+        run: npm ci
+      
+      - name: Lint with ESLint
+        run: |
+          npx eslint "frontend/src/**/*.{ts,tsx}"
+      
+      - name: Check formatting with Prettier
+        run: |
+          npx prettier --check "frontend/src/**/*.{ts,tsx,js,jsx,css,html}"
+      
+      - name: Run frontend tests
+        run: npm test
+        
+  build:
+    needs: [backend-checks, frontend-checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          npm ci
+      
+      - name: Build frontend
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            frontend/build/
+            src/
+            requirements.txt
+            
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') || github.event.inputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: production # Reference a GitHub environment named 'production' for secrets/rules
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+      
+      - name: Set up deployment environment
+        run: |
+          echo "Setting up deployment environment"
+          # Add your deployment setup commands here (e.g., install deployment tools)
+      
+      - name: Deploy application
+        env:
+          # These secrets need to be configured in your GitHub repository settings
+          # Go to Settings -> Secrets and variables -> Actions -> New repository secret
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }} # Example: SSH key for server access
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # Example: Production database URL
+          DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }} # Your Deepgram key
+        run: |
+          echo "Deploying application..."
+          # Add your actual deployment commands here
+          # This will vary greatly depending on your hosting provider (e.g., Render, Heroku, AWS, VPS)
+          # Example for a simple SCP + SSH deployment:
+          # echo "${{ secrets.DEPLOY_KEY }}" > deploy_key.pem
+          # chmod 600 deploy_key.pem
+          # scp -i deploy_key.pem -r ./* user@your_server_ip:/path/to/app
+          # ssh -i deploy_key.pem user@your_server_ip "cd /path/to/app && ./restart_server.sh" # Assuming you have a restart script
+          echo "Deployment commands need to be implemented based on your hosting."
+      
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          # Add verification steps here
+          # Example: curl health check
+          # curl -f http://your_deployed_app_url/health || exit 1
+          echo "Verification steps need to be implemented."
