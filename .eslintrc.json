@@ -1,0 +1,35 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier" // Make sure Prettier rules override conflicting ESLint rules
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react",
+    "@typescript-eslint"
+  ],
+  "rules": {
+    // Add any specific rule overrides here if needed
+    "react/react-in-jsx-scope": "off" // Often not needed with modern React/build tools
+  },
+  "settings": {
+    "react": {
+      "version": "detect" // Automatically detect React version
+    }
+  },
+  "ignorePatterns": ["node_modules/", "build/", "dist/", "*.js"] // Ignore JS config files if needed
+}

@@ -1,16 +1,14 @@
-from typing import Optional
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
-import time
 import logging
-from app.config.settings import settings
-from app.services.mock_redis import MockRedis
+from src.app.config.settings import settings
+from src.app.services.mock_redis import MockRedis
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.responses import Response
-from app.services.monitoring.monitoring_service import MonitoringService
+from src.app.services.monitoring.monitoring_service import MonitoringService
 
 logger = logging.getLogger(__name__)
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Middleware for rate limiting requests."""
@@ -22,7 +20,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.rate_limit = settings.RATE_LIMIT_REQUESTS
         self.window = settings.RATE_LIMIT_WINDOW
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Process the request and apply rate limiting."""
         client_ip = request.client.host
         endpoint = request.url.path
@@ -38,8 +38,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if self.monitoring_service:
                 await self.monitoring_service.record_rate_limit_hit(client_ip, endpoint)
             return JSONResponse(
-                status_code=429,
-                content={"detail": "Too many requests"}
+                status_code=429, content={"detail": "Too many requests"}
             )
 
-        return await call_next(request) 
+        return await call_next(request)

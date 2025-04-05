@@ -1,4 +1,4 @@
-from app.db.database import engine, Base
+from src.app.db.database import engine, Base
 import logging
 
 logging.basicConfig(level=logging.INFO)

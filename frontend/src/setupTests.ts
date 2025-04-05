@@ -1,9 +1,9 @@
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -22,7 +22,7 @@ class IntersectionObserver {
   unobserve = jest.fn();
 }
 
-Object.defineProperty(window, 'IntersectionObserver', {
+Object.defineProperty(window, "IntersectionObserver", {
   writable: true,
   configurable: true,
   value: IntersectionObserver,
@@ -35,8 +35,8 @@ class ResizeObserver {
   unobserve = jest.fn();
 }
 
-Object.defineProperty(window, 'ResizeObserver', {
+Object.defineProperty(window, "ResizeObserver", {
   writable: true,
   configurable: true,
   value: ResizeObserver,
-}); 
+});

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional, Union, Dict, Any
+from typing import List, Optional
+
 
 # Resident schemas
 class ResidentBase(BaseModel):
@@ -10,11 +11,14 @@ class ResidentBase(BaseModel):
     texture_prefs: Optional[List[str]] = None
     notes: Optional[str] = None
 
+
 class ResidentCreate(ResidentBase):
     pass
 
+
 class ResidentUpdate(ResidentBase):
     name: Optional[str] = None
+
 
 class ResidentInDB(ResidentBase):
     id: int
@@ -24,8 +28,10 @@ class ResidentInDB(ResidentBase):
     class Config:
         orm_mode = True
 
+
 class Resident(ResidentInDB):
     pass
+
 
 # Order schemas
 class OrderBase(BaseModel):
@@ -37,8 +43,10 @@ class OrderBase(BaseModel):
     flagged: Optional[str] = None
     status: Optional[str] = "pending"
 
+
 class OrderCreate(OrderBase):
     pass
+
 
 class OrderUpdate(BaseModel):
     table_id: Optional[int] = None
@@ -49,6 +57,7 @@ class OrderUpdate(BaseModel):
     flagged: Optional[str] = None
     status: Optional[str] = None
 
+
 class OrderInDB(OrderBase):
     id: int
     created_at: datetime
@@ -58,8 +67,10 @@ class OrderInDB(OrderBase):
     class Config:
         orm_mode = True
 
+
 class Order(OrderInDB):
     pass
+
 
 # Table schemas
 class TableBase(BaseModel):
@@ -68,14 +79,17 @@ class TableBase(BaseModel):
     x: int
     y: int
 
+
 class TableCreate(TableBase):
     pass
+
 
 class TableUpdate(TableBase):
     number: Optional[int] = None
     type: Optional[str] = None
     x: Optional[int] = None
     y: Optional[int] = None
+
 
 class TableInDB(TableBase):
     id: int
@@ -85,8 +99,10 @@ class TableInDB(TableBase):
     class Config:
         orm_mode = True
 
+
 class Table(TableInDB):
     pass
+
 
 # Voice processing schemas
 class VoiceProcessRequest(BaseModel):
@@ -94,10 +110,14 @@ class VoiceProcessRequest(BaseModel):
     table_id: Optional[int] = None
     resident_id: Optional[int] = None
 
+
 class VoiceProcessResponse(BaseModel):
     order_id: int
     transcription: str
     processed_order: str
+    extracted_items: List[str] = []
+    confidence: float = 0.0
+
 
 # Order stats schemas
 class OrderStats(BaseModel):
@@ -107,6 +127,7 @@ class OrderStats(BaseModel):
     ready_count: int
     completed_today: int
     avg_prep_time: float
+
 
 class OrderConfirm(BaseModel):
     confirmed: bool

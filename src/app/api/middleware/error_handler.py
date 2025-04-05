@@ -7,6 +7,7 @@ import logging
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Handle validation errors
@@ -17,6 +18,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": exc.body},
     )
 
+
 async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     """
     Handle database errors
@@ -26,6 +28,7 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Database error occurred"},
     )
+
 
 async def general_exception_handler(request: Request, exc: Exception):
     """

@@ -1,108 +1,75 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from "react";
+import { NavLink } from "react-router-dom"; // Import NavLink
+// Import necessary icons
 import {
-  HomeIcon,
-  ClipboardDocumentListIcon,
-  UserGroupIcon,
-  Cog6ToothIcon,
-} from '@heroicons/react/24/outline';
+  UserIcon, // Server
+  CogIcon, // Admin (using Cog temporarily)
+  FireIcon, // Kitchen
+  CheckCircleIcon, // Expeditor
+  BuildingOfficeIcon, // Room Service
+  HeartIcon, // Memory Care
+  AdjustmentsHorizontalIcon, // Settings
+} from "@heroicons/react/24/outline";
 
-interface NavItem {
+// Define navigation structure
+interface RoleNavItem {
   name: string;
   href: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
-const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Orders', href: '/orders', icon: ClipboardDocumentListIcon },
-  { name: 'Tables', href: '/tables', icon: UserGroupIcon },
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+const roleNavigation: RoleNavItem[] = [
+  { name: "Server", href: "/", icon: UserIcon },
+  { name: "Kitchen", href: "/kitchen", icon: FireIcon },
+  { name: "Expeditor", href: "/expeditor", icon: CheckCircleIcon },
+  { name: "Room Svc", href: "/room-service", icon: BuildingOfficeIcon },
+  { name: "Memory Care", href: "/memory-care", icon: HeartIcon },
+  { name: "Admin", href: "/admin", icon: CogIcon }, // Floor plan editor
+  { name: "Settings", href: "/settings", icon: AdjustmentsHorizontalIcon },
 ];
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const location = useLocation();
-
+export const Layout: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-        <div className="flex h-16 items-center justify-center border-b">
-          <h1 className="text-xl font-bold text-gray-900">Plate Order System</h1>
-        </div>
-        <nav className="mt-5 px-2">
-          <div className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    isActive
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon
-                    className={`mr-3 h-6 w-6 flex-shrink-0 ${
-                      isActive ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500'
-                    }`}
-                  />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      </div>
+    // Apply dark mode base styles defined in index.css via html.dark
+    <div className="flex flex-col min-h-screen bg-dark-primary text-dark-text">
+      {/* Main content area - takes up remaining space */}
+      {/* Ensure main area can shrink and grow, and establish a height context for children */}
+      {/* Ensure main area fills space and provides flex context */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col">
+        {" "}
+        {/* Removed overflow-y-auto */}
+        {/* Content from Routes will be rendered here */}
+        {children}
+      </main>
 
-      {/* Main content */}
-      <div className="pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-white px-4 shadow-sm">
-          <div className="flex items-center">
-            <h2 className="text-lg font-medium text-gray-900">
-              {navigation.find((item) => item.href === location.pathname)?.name || 'Dashboard'}
-            </h2>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="rounded-full bg-gray-100 p-2 text-gray-400 hover:text-gray-500">
-              <span className="sr-only">View notifications</span>
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-                />
-              </svg>
-            </button>
-            <div className="relative">
-              <button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                <span className="sr-only">Open user menu</span>
-                <img
-                  className="h-8 w-8 rounded-full"
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt=""
-                />
-              </button>
-            </div>
-          </div>
+      {/* Bottom Navigation Bar */}
+      <nav className="sticky bottom-0 z-50 border-t border-dark-border bg-dark-secondary shadow-md">
+        <div className="flex h-16 items-center justify-around px-2 sm:px-4">
+          {roleNavigation.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              // Handle root path matching exactly for Server view
+              end={item.href === "/"}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center flex-grow px-1 pt-1 text-xs font-medium transition-colors duration-150 ease-in-out focus:outline-none
+                ${
+                  isActive
+                    ? "text-blue-400 border-t-2 border-blue-400" // Active state style
+                    : "text-dark-text-secondary hover:text-dark-text border-t-2 border-transparent" // Inactive state style
+                }`
+              }
+            >
+              <item.icon className="h-6 w-6 mb-1" aria-hidden="true" />
+              <span className="text-center truncate w-full">{item.name}</span>
+            </NavLink>
+          ))}
         </div>
-
-        {/* Page content */}
-        <main className="py-6">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
-        </main>
-      </div>
+      </nav>
     </div>
   );
 };
 
-export default Layout; 
+export default Layout;

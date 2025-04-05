@@ -1,4 +1,4 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface DebugOptions {
   component: string;
@@ -8,7 +8,7 @@ interface DebugOptions {
 
 class Debugger {
   private static instance: Debugger;
-  private isEnabled: boolean = process.env.NODE_ENV === 'development';
+  private isEnabled: boolean = process.env.NODE_ENV === "development";
   private logLevels: Record<LogLevel, number> = {
     debug: 0,
     info: 1,
@@ -51,7 +51,7 @@ class Debugger {
     }
     parts.push(`[${options.component}]`);
     parts.push(message);
-    return parts.join(' ');
+    return parts.join(" ");
   }
 
   debug(message: string, options: DebugOptions) {
@@ -83,19 +83,26 @@ class Debugger {
 
   logState(state: any, options: DebugOptions) {
     if (this.isEnabled) {
-      console.group(this.formatMessage('State:', options));
+      console.group(this.formatMessage("State:", options));
       console.log(JSON.stringify(state, null, 2));
       console.groupEnd();
     }
   }
 
-  logApiCall(endpoint: string, method: string, data: any, options: DebugOptions) {
+  logApiCall(
+    endpoint: string,
+    method: string,
+    data: any,
+    options: DebugOptions,
+  ) {
     if (this.isEnabled) {
-      console.group(this.formatMessage(`API Call: ${method} ${endpoint}`, options));
-      console.log('Request Data:', data);
+      console.group(
+        this.formatMessage(`API Call: ${method} ${endpoint}`, options),
+      );
+      console.log("Request Data:", data);
       console.groupEnd();
     }
   }
 }
 
-export const debug = Debugger.getInstance(); 
+export const debug = Debugger.getInstance();

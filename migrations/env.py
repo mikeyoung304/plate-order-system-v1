@@ -16,8 +16,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv()
 
 # Import all models
-from app.models.models import Base
-from app.db.database import DATABASE_URL
+from src.app.models.models import Base
+from src.app.db.database import DATABASE_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

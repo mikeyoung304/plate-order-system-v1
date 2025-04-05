@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import api from '../utils/api';
-import axios from 'axios';
-import { debug } from '../utils/debug';
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "../utils/api";
+import axios from "axios";
+import { debug } from "../utils/debug";
 import {
   ClipboardDocumentListIcon,
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 // Define debug options
-const DEBUG_OPTIONS = { component: 'Dashboard', timestamp: true };
+const DEBUG_OPTIONS = { component: "Dashboard", timestamp: true };
 
 interface DashboardStats {
   total_orders: number;
@@ -21,22 +21,35 @@ interface DashboardStats {
 }
 
 interface RecentOrder {
-  id: string;
+  id: number; // Match API response (number)
   table_id: number;
-  seat_number: number;
+  seat_number: number | null; // Match API response (can be null)
   details: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  // Include all possible statuses from backend OrderStatus
+  status:
+    | "pending"
+    | "confirmed"
+    | "cancelled"
+    | "in_progress"
+    | "ready"
+    | "completed";
   created_at: string;
+  // Add other fields from API if needed later, though not used in current render
+  resident_id?: number | null;
+  raw_transcription?: string | null;
+  flagged?: string | null;
+  updated_at?: string;
+  completed_at?: string | null;
 }
 
 export const Dashboard: React.FC = () => {
   // Fetch dashboard statistics
   const { data: stats, isLoading: isLoadingStats } = useQuery<DashboardStats>({
-    queryKey: ['dashboard-stats'],
+    queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      debug.logApiCall('/api/dashboard/stats', 'GET', {}, DEBUG_OPTIONS);
-      const response = await api.get('/api/dashboard/stats');
-      debug.info('Dashboard stats fetched successfully', DEBUG_OPTIONS);
+      debug.logApiCall("/api/dashboard/stats", "GET", {}, DEBUG_OPTIONS);
+      const response = await api.get("/api/dashboard/stats");
+      debug.info("Dashboard stats fetched successfully", DEBUG_OPTIONS);
       return response.data;
     },
     retry: 2,
@@ -44,12 +57,14 @@ export const Dashboard: React.FC = () => {
   });
 
   // Fetch recent orders
-  const { data: recentOrders, isLoading: isLoadingOrders } = useQuery<RecentOrder[]>({
-    queryKey: ['recent-orders'],
+  const { data: recentOrders, isLoading: isLoadingOrders } = useQuery<
+    RecentOrder[]
+  >({
+    queryKey: ["recent-orders"],
     queryFn: async () => {
-      debug.logApiCall('/api/orders/recent', 'GET', {}, DEBUG_OPTIONS);
-      const response = await api.get('/api/orders/recent');
-      debug.info('Recent orders fetched successfully', DEBUG_OPTIONS);
+      debug.logApiCall("/api/orders/recent", "GET", {}, DEBUG_OPTIONS);
+      const response = await api.get("/api/orders/recent");
+      debug.info("Recent orders fetched successfully", DEBUG_OPTIONS);
       return response.data;
     },
     retry: 2,
@@ -58,28 +73,28 @@ export const Dashboard: React.FC = () => {
 
   const statCards = [
     {
-      name: 'Total Orders',
+      name: "Total Orders",
       value: stats?.total_orders || 0,
       icon: ClipboardDocumentListIcon,
-      color: 'bg-blue-500',
+      color: "bg-blue-500",
     },
     {
-      name: 'Pending Orders',
+      name: "Pending Orders",
       value: stats?.pending_orders || 0,
       icon: ClockIcon,
-      color: 'bg-yellow-500',
+      color: "bg-yellow-500",
     },
     {
-      name: 'Confirmed Orders',
+      name: "Confirmed Orders",
       value: stats?.confirmed_orders || 0,
       icon: CheckCircleIcon,
-      color: 'bg-green-500',
+      color: "bg-green-500",
     },
     {
-      name: 'Cancelled Orders',
+      name: "Cancelled Orders",
       value: stats?.cancelled_orders || 0,
       icon: XCircleIcon,
-      color: 'bg-red-500',
+      color: "bg-red-500",
     },
   ];
 
@@ -101,7 +116,9 @@ export const Dashboard: React.FC = () => {
               </p>
             </dt>
             <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
-              <p className="text-2xl font-semibold text-gray-900">{card.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {card.value}
+              </p>
             </dd>
           </div>
         ))}
@@ -125,15 +142,17 @@ export const Dashboard: React.FC = () => {
                       <p className="text-sm font-medium text-gray-900">
                         Order #{order.id}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {order.details}
-                      </p>
+                      <p className="text-sm text-gray-500">{order.details}</p>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      order.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        order.status === "confirmed"
+                          ? "bg-green-100 text-green-800"
+                          : order.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {order.status}
                     </span>
                   </div>
@@ -147,4 +166,4 @@ export const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

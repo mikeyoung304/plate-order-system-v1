@@ -61,7 +61,7 @@ python-dateutil==2.8.2
 
 # Speech to text (for production)
 # openai==0.28.0 # Replaced by Deepgram
-deepgram-sdk>=3.0.0,<4.0.0 # Upgraded to latest v3 stable
+deepgram-sdk>=3.0.0,<4.0.0 # Reverting to latest v3 stable
 
 # Monitoring and logging
 prometheus-client==0.17.1

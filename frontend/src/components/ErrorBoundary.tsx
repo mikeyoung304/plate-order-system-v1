@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface Props {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       error: null,
       errorInfo: null,
       retryCount: 0,
-      isMaxRetries: false
+      isMaxRetries: false,
     };
   }
 
@@ -31,14 +31,14 @@ class ErrorBoundary extends React.Component<Props, State> {
     return {
       hasError: true,
       error,
-      isMaxRetries: false
+      isMaxRetries: false,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Update state with error info
     this.setState({
-      errorInfo
+      errorInfo,
     });
 
     // Call error handler if provided
@@ -47,21 +47,21 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
 
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error);
-      console.error('Component stack:', errorInfo.componentStack);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error caught by boundary:", error);
+      console.error("Component stack:", errorInfo.componentStack);
     }
   }
 
   handleRetry = () => {
     const { maxRetries = 3 } = this.props;
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const newRetryCount = prevState.retryCount + 1;
       const newIsMaxRetries = newRetryCount >= maxRetries;
       return {
         hasError: true,
         retryCount: newRetryCount,
-        isMaxRetries: newIsMaxRetries
+        isMaxRetries: newIsMaxRetries,
       };
     });
   };
@@ -72,7 +72,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       error: null,
       errorInfo: null,
       retryCount: 0,
-      isMaxRetries: false
+      isMaxRetries: false,
     });
   };
 
@@ -89,50 +89,49 @@ class ErrorBoundary extends React.Component<Props, State> {
         return fallback;
       }
 
+      // --- Simplified Fallback UI ---
       return (
-        <div className="error-boundary">
-          <div className="error-content">
-            <h2>Something went wrong</h2>
-            <div className="error-details">
-              <p className="error-message">{error.message}</p>
-              {process.env.NODE_ENV === 'development' && errorInfo && (
-                <pre className="error-stack">
-                  {error.stack}
-                  {errorInfo.componentStack}
-                </pre>
-              )}
-            </div>
-            <div className="error-actions">
-              <button
-                className={`btn btn-primary ${isMaxRetries ? 'disabled' : ''}`}
-                onClick={this.handleRetry}
-                disabled={isMaxRetries}
-                data-testid="retry-button"
-                aria-disabled={isMaxRetries}
-              >
-                Try again ({retryCount}/{maxRetries})
-                {isMaxRetries && <span> - Max retries reached</span>}
-              </button>
-              <button 
-                className="btn btn-secondary"
-                onClick={this.handleReset}
-              >
-                Reset
-              </button>
-              <button 
-                className="btn btn-secondary"
-                onClick={this.handleRefresh}
-              >
-                Refresh Page
-              </button>
-            </div>
-          </div>
+        <div
+          style={{
+            padding: "20px",
+            border: "2px solid red",
+            margin: "20px",
+            backgroundColor: "#fee",
+          }}
+        >
+          <h1>Application Error</h1>
+          <p>An error occurred while rendering this part of the application.</p>
+          {process.env.NODE_ENV === "development" && error && (
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+                backgroundColor: "#ddd",
+                padding: "10px",
+                marginTop: "10px",
+              }}
+            >
+              Error: {error.message}
+              {"\n\n"}
+              Stack: {error.stack}
+              {errorInfo && errorInfo.componentStack
+                ? `\n\nComponent Stack: ${errorInfo.componentStack}`
+                : ""}
+            </pre>
+          )}
+          <button
+            onClick={this.handleRefresh}
+            style={{ marginTop: "10px", padding: "5px 10px" }}
+          >
+            Refresh Page
+          </button>
         </div>
       );
+      // --- End Simplified Fallback UI ---
     }
 
     return children;
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

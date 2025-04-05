@@ -1,9 +1,9 @@
 import pytest
 import json
 from unittest.mock import Mock, patch
-from app.services.order.order_processor import OrderProcessor
-from app.models.order import Order, OrderStatus
-from app.services.voice.deepgram_service import DeepgramService
+from src.app.services.order.order_processor import OrderProcessor
+from src.app.models.order import Order, OrderStatus
+from src.app.services.voice.deepgram_service import DeepgramService
 
 @pytest.fixture
 def order_processor():

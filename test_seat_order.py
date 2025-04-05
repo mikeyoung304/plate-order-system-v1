@@ -8,8 +8,8 @@ import httpx
 import json
 from typing import Optional
 from dotenv import load_dotenv
-from app.services.voice.audio_recorder import AudioRecorder
-from app.config.settings import settings
+from src.app.services.voice.audio_recorder import AudioRecorder
+from src.app.config.settings import settings
 
 # Configure logging
 logging.basicConfig(

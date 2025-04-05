@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock, patch
 import time
-from app.services.monitoring.monitoring_service import MonitoringService
-from app.models.metrics import OrderMetrics, TranscriptionMetrics
+from src.app.services.monitoring.monitoring_service import MonitoringService
+from src.app.models.metrics import OrderMetrics, TranscriptionMetrics
 
 @pytest.fixture
 def monitoring_service():

@@ -7,7 +7,7 @@ import base64
 import httpx
 import json
 from dotenv import load_dotenv
-from app.config.settings import settings
+from src.app.config.settings import settings
 
 # Configure logging
 logging.basicConfig(
@@ -98,7 +98,7 @@ async def test_api_integration():
         # Send request to API
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"http://localhost:8000{settings.API_V1_STR}/orders/voice",
+                f"http://localhost:8000/api/orders/voice", # Corrected path
                 json=data,
                 timeout=30.0
             )

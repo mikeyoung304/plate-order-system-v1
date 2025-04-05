@@ -2,7 +2,7 @@ import pytest
 import asyncio
 import os
 import wave
-from app.services.voice.audio_recorder import AudioRecorder
+from src.app.services.voice.audio_recorder import AudioRecorder
 
 @pytest.fixture
 async def audio_recorder():
