@@ -1,0 +1,263 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Floor Plan Designer - Admin - Plate Order System{% endblock %}
+
+{% block meta_description %}Admin interface for designing floor plans in the Plate Order System{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/floor-plan.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Tools Panel -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Tools</h3>
+                </div>
+                <div class="card-body">
+                    <div class="tool-section">
+                        <h4>Add Table</h4>
+                        <div class="table-shapes">
+                            <button id="add-square-table" class="btn btn-outline-primary" data-shape="square">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3" y="3" width="18" height="18" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <span>Square</span>
+                            </button>
+                            <button id="add-rectangle-table" class="btn btn-outline-primary" data-shape="rectangle">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="2" y="6" width="20" height="12" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <span>Rectangle</span>
+                            </button>
+                            <button id="add-circle-table" class="btn btn-outline-primary" data-shape="circle">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <span>Circle</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="tool-section">
+                        <h4>Actions</h4>
+                        <button id="delete-selected" class="btn btn-outline-danger mb-2 w-100">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-1">
+                                <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Delete Selected
+                        </button>
+                        <button id="clear-all" class="btn btn-outline-secondary mb-2 w-100">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-1">
+                                <path d="M3 6H21M5 6V20C5 20.5304 5.21071 21.0391 5.58579 21.4142C5.96086 21.7893 6.46957 22 7 22H17C17.5304 22 18.0391 21.7893 18.4142 21.4142C18.7893 21.0391 19 20.5304 19 20V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Clear All
+                        </button>
+                    </div>
+
+                    <hr>
+
+                    <div class="tool-section">
+                        <h4>Floor Plan</h4>
+                        <button id="save-floor-plan" class="btn btn-success mb-2 w-100">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-1">
+                                <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M17 21V13H7V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 3V8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Save Floor Plan
+                        </button>
+                        <button id="load-floor-plan" class="btn btn-primary mb-2 w-100">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="me-1">
+                                <path d="M4 16V17C4 17.5304 4.21071 18.0391 4.58579 18.4142C4.96086 18.7893 5.46957 19 6 19H18C18.5304 19 19.0391 18.7893 19.4142 18.4142C19.7893 18.0391 20 17.5304 20 17V16M16 8L12 4M12 4L8 8M12 4V16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Load Floor Plan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Properties Panel -->
+            <div id="table-properties" class="card shadow-sm mb-4 d-none">
+                <div class="card-header">
+                    <h3 class="card-title">Table Properties</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-3">
+                        <label for="table-name">Table Name/Number</label>
+                        <input type="text" id="table-name" class="form-control" placeholder="e.g., Table 1">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-seats">Number of Seats</label>
+                        <input type="number" id="table-seats" class="form-control" min="1" max="20" value="4">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-width">Width (px)</label>
+                        <input type="number" id="table-width" class="form-control" min="50" max="300" value="100">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-height">Height (px)</label>
+                        <input type="number" id="table-height" class="form-control" min="50" max="300" value="100">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-rotation">Rotation (degrees)</label>
+                        <input type="number" id="table-rotation" class="form-control" min="0" max="359" value="0">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-zone">Zone</label>
+                        <select id="table-zone" class="form-select">
+                            <option value="main">Main Dining</option>
+                            <option value="private">Private Dining</option>
+                            <option value="outdoor">Outdoor</option>
+                            <option value="bar">Bar Area</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="table-status">Status</label>
+                        <select id="table-status" class="form-select">
+                            <option value="available">Available</option>
+                            <option value="reserved">Reserved</option>
+                            <option value="out_of_service">Out of Service</option>
+                        </select>
+                    </div>
+                    <button id="apply-properties" class="btn btn-primary w-100">Apply Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <!-- Canvas Container -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Floor Plan Designer</h3>
+                    <div class="zoom-controls">
+                        <button id="zoom-out-btn" class="btn btn-sm btn-outline-secondary" aria-label="Zoom out">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button id="zoom-in-btn" class="btn btn-sm btn-outline-secondary" aria-label="Zoom in">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="floor-plan-designer" class="floor-plan-designer">
+                        <canvas id="floor-plan-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Floor Plan Modal -->
+<div class="modal fade" id="save-floor-plan-modal" tabindex="-1" aria-labelledby="save-floor-plan-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="save-floor-plan-modal-label">Save Floor Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="floor-plan-name">Floor Plan Name</label>
+                    <input type="text" id="floor-plan-name" class="form-control" placeholder="e.g., Main Dining Floor">
+                </div>
+                <div class="form-group mt-3">
+                    <label for="floor-plan-description">Description (Optional)</label>
+                    <textarea id="floor-plan-description" class="form-control" rows="3" placeholder="Brief description of this floor plan"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="save-floor-plan-confirm" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Floor Plan Modal -->
+<div class="modal fade" id="load-floor-plan-modal" tabindex="-1" aria-labelledby="load-floor-plan-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="load-floor-plan-modal-label">Load Floor Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="floor-plan-list" class="list-group">
+                    <!-- Floor plans will be loaded here dynamically -->
+                    <div class="text-center py-4 text-muted">
+                        <p>Loading floor plans...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seat Configuration Modal -->
+<div class="modal fade" id="seat-config-modal" tabindex="-1" aria-labelledby="seat-config-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="seat-config-modal-label">Configure Seats for Table <span id="seat-config-table-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="seat-count">Number of Seats</label>
+                            <input type="number" id="seat-count" class="form-control" min="1" max="20" value="4">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Seat Arrangement</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="seat-arrangement" id="seat-arrangement-even" value="even" checked>
+                                <label class="btn btn-outline-primary" for="seat-arrangement-even">Evenly Distributed</label>
+                                
+                                <input type="radio" class="btn-check" name="seat-arrangement" id="seat-arrangement-custom" value="custom">
+                                <label class="btn btn-outline-primary" for="seat-arrangement-custom">Custom Positions</label>
+                            </div>
+                        </div>
+                        <div id="custom-seat-positions" class="d-none">
+                            <div class="alert alert-info">
+                                Drag seats to position them around the table.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="seat-preview-container">
+                            <div id="seat-preview" class="seat-preview">
+                                <!-- Seat preview will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="apply-seat-config" class="btn btn-primary">Apply Configuration</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lib/fabric.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin/floor-plan-designer.js') }}"></script>
+{% endblock %}

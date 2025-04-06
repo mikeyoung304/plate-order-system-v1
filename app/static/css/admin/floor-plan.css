@@ -1,0 +1,173 @@
+/**
+ * Floor Plan Designer CSS
+ * Styles for the admin floor plan designer interface
+ */
+
+.admin-container {
+  padding: 20px;
+}
+
+/* Tools Panel */
+.tool-section {
+  margin-bottom: 15px;
+}
+
+.table-shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.table-shapes button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  flex: 1;
+  min-width: 70px;
+}
+
+.table-shapes button svg {
+  margin-bottom: 5px;
+}
+
+/* Floor Plan Designer */
+.floor-plan-designer {
+  width: 100%;
+  height: 700px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  overflow: hidden;
+  position: relative;
+}
+
+#floor-plan-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Table Properties Panel */
+#table-properties {
+  transition: all 0.3s ease;
+}
+
+/* Seat Preview */
+.seat-preview-container {
+  width: 100%;
+  height: 300px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.seat-preview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Table styles for the designer */
+.table-object {
+  cursor: move;
+}
+
+.table-object.selected {
+  outline: 2px dashed #007bff;
+}
+
+.seat-object {
+  cursor: pointer;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  display: flex;
+  gap: 5px;
+}
+
+/* Custom seat positions */
+#custom-seat-positions {
+  margin-top: 15px;
+}
+
+/* Floor plan list */
+#floor-plan-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.floor-plan-item {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.floor-plan-item:hover {
+  background-color: #f8f9fa;
+}
+
+.floor-plan-item.active {
+  background-color: #e9ecef;
+}
+
+/* Table shapes */
+.table-square {
+  background-color: #ffffff;
+  border: 2px solid #6c757d;
+}
+
+.table-rectangle {
+  background-color: #ffffff;
+  border: 2px solid #6c757d;
+}
+
+.table-circle {
+  background-color: #ffffff;
+  border: 2px solid #6c757d;
+  border-radius: 50%;
+}
+
+/* Seat styles */
+.seat {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+/* Table status colors */
+.table-available {
+  border-color: #28a745;
+}
+
+.table-reserved {
+  border-color: #ffc107;
+}
+
+.table-out-of-service {
+  border-color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .floor-plan-designer {
+    height: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 10px;
+  }
+  
+  .floor-plan-designer {
+    height: 400px;
+  }
+}

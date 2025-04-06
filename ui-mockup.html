@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plate Order System UI Mockup</title>
+    <style>
+        /* Design System Colors */
+        :root {
+            /* Primary color palette - Calming blue tones */
+            --primary-50: #f0f7ff;
+            --primary-100: #e0effe;
+            --primary-200: #bae0fd;
+            --primary-300: #7cc5fb;
+            --primary-400: #36a9f8;
+            --primary-500: #0d8eee;
+            --primary-600: #0072d6;
+            --primary-700: #005db1;
+            --primary-800: #004f92;
+            --primary-900: #003b6f;
+            --primary-950: #00264d;
+            
+            /* Secondary color palette - Warm accents */
+            --secondary-50: #fff8f0;
+            --secondary-100: #ffecd6;
+            --secondary-200: #ffd4a8;
+            --secondary-300: #ffb770;
+            --secondary-400: #ff9838;
+            --secondary-500: #ff7a00;
+            --secondary-600: #e16000;
+            --secondary-700: #bc4600;
+            --secondary-800: #983800;
+            --secondary-900: #7c2e00;
+            --secondary-950: #431400;
+            
+            /* Neutral color palette */
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-400: #9ca3af;
+            --neutral-500: #6b7280;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-800: #1f2937;
+            --neutral-900: #111827;
+            --neutral-950: #030712;
+            
+            /* Semantic colors */
+            --success-50: #ecfdf5;
+            --success-500: #10b981;
+            --success-700: #047857;
+            
+            --warning-50: #fffbeb;
+            --warning-500: #f59e0b;
+            --warning-700: #b45309;
+            
+            --error-50: #fef2f2;
+            --error-500: #ef4444;
+            --error-700: #b91c1c;
+            
+            --info-50: #eff6ff;
+            --info-500: #3b82f6;
+            --info-700: #1d4ed8;
+        }
+
+        /* Base styles */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--neutral-50);
+            color: var(--neutral-900);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3, h4 {
+            margin-top: 0;
+            color: var(--neutral-900);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--neutral-200);
+            padding-bottom: 0.5rem;
+        }
+
+        .mockup-section {
+            margin-bottom: 3rem;
+        }
+
+        .mockup-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .navbar {
+            background-color: var(--primary-600);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+        }
+
+        .main-content {
+            padding: 1.5rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .card-header {
+            padding: 1rem;
+            background-color: var(--neutral-50);
+            border-bottom: 1px solid var(--neutral-200);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .floor-plan {
+            background-color: var(--neutral-100);
+            height: 300px;
+            position: relative;
+            border-radius: 4px;
+            border: 1px solid var(--neutral-200);
+        }
+
+        .table {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: var(--neutral-100);
+            border: 2px solid var(--neutral-300);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .table.occupied {
+            background-color: var(--primary-100);
+            border-color: var(--primary-500);
+        }
+
+        .table.selected {
+            background-color: var(--primary-200);
+            border-color: var(--primary-600);
+            box-shadow: 0 0 0 3px rgba(13, 142, 238, 0.25);
+        }
+
+        .voice-recorder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 0;
+        }
+
+        .voice-button {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: var(--primary-600);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .voice-button.recording {
+            background-color: var(--error-500);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .audio-visualizer {
+            width: 100%;
+            height: 60px;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .audio-bar {
+            width: 4px;
+            height: 20px;
+            background-color: var(--primary-400);
+            border-radius: 2px;
+        }
+
+        .transcription-result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--neutral-50);
+            border-radius: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-600);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-500);
+            color: white;
+        }
+
+        .kds-orders {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .kds-order {
+            border-left: 4px solid var(--primary-600);
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .kds-order.urgent {
+            border-left-color: var(--error-500);
+        }
+
+        .kds-order.in-progress {
+            border-left-color: var(--warning-500);
+        }
+
+        .kds-order.completed {
+            border-left-color: var(--success-500);
+            opacity: 0.7;
+        }
+
+        .kds-order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--neutral-100);
+            font-weight: 600;
+        }
+
+        .kds-order-body {
+            padding: 0.75rem 1rem;
+        }
+
+        .kds-order-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background-color: var(--neutral-50);
+            font-size: 0.875rem;
+            color: var(--neutral-600);
+        }
+
+        .kds-timer {
+            font-weight: 600;
+        }
+
+        .kds-timer.warning {
+            color: var(--warning-600);
+        }
+
+        .kds-timer.danger {
+            color: var(--error-600);
+        }
+
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .color-swatch {
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .color-display {
+            height: 80px;
+        }
+
+        .color-info {
+            padding: 0.5rem;
+            background-color: white;
+            font-size: 0.75rem;
+        }
+
+        .color-name {
+            font-weight: 600;
+        }
+
+        .color-hex {
+            color: var(--neutral-500);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 300px;
+            overflow: hidden;
+        }
+
+        .notification-success {
+            border-left: 4px solid var(--success-500);
+        }
+
+        .notification-content {
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .notification-icon {
+            color: var(--success-500);
+        }
+
+        .notification-text {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .notification-message {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--neutral-600);
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--neutral-400);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plate Order System UI Mockup</h1>
+
+        <div class="mockup-section">
+            <h2>Color Palette</h2>
+            <div class="color-palette">
+                <!-- Primary Colors -->
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #0072d6;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Primary 600</div>
+                        <div class="color-hex">#0072d6</div>
+                    </div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #005db1;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Primary 700</div>
+                        <div class="color-hex">#005db1</div>
+                    </div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #0d8eee;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Primary 500</div>
+                        <div class="color-hex">#0d8eee</div>
+                    </div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #bae0fd;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Primary 200</div>
+                        <div class="color-hex">#bae0fd</div>
+                    </div>
+                </div>
+
+                <!-- Secondary Colors -->
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #ff7a00;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Secondary 500</div>
+                        <div class="color-hex">#ff7a00</div>
+                    </div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #e16000;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Secondary 600</div>
+                        <div class="color-hex">#e16000</div>
+                    </div>
+                </div>
+
+                <!-- Semantic Colors -->
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #10b981;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Success 500</div>
+                        <div class="color-hex">#10b981</div>
+                    </div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #f59e0b;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Warning 500</div>
+                        <div class="color-hex">#f59e0b</div>
+                    </div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-display" style="background-color: #ef4444;"></div>
+                    <div class="color-info">
+                        <div class="color-name">Error 500</div>
+                        <div class="color-hex">#ef4444</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>Server View</h2>
+            <div class="mockup-container">
+                <div class="navbar">
+                    <div class="navbar-brand">Plate Order System</div>
+                    <div class="navbar-nav">
+                        <a href="#" class="nav-link">Home</a>
+                        <a href="#" class="nav-link">Server View</a>
+                        <a href="#" class="nav-link">Kitchen View</a>
+                        <a href="#" class="nav-link">Floor Plan</a>
+                        <a href="#" class="nav-link">Residents</a>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div class="row">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">
+                                    <span>Floor Plan</span>
+                                    <div>
+                                        <button class="btn btn-sm">-</button>
+                                        <button class="btn btn-sm">+</button>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="padding: 0;">
+                                    <div class="floor-plan">
+                                        <div class="table" style="top: 50px; left: 50px;">1</div>
+                                        <div class="table occupied" style="top: 50px; left: 150px;">2</div>
+                                        <div class="table" style="top: 50px; left: 250px;">3</div>
+                                        <div class="table" style="top: 150px; left: 50px;">4</div>
+                                        <div class="table selected" style="top: 150px; left: 150px;">5</div>
+                                        <div class="table occupied" style="top: 150px; left: 250px;">6</div>
+                                        <div class="table" style="top: 250px; left: 50px;">7</div>
+                                        <div class="table" style="top: 250px; left: 150px;">8</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">
+                                    Table 5
+                                </div>
+                                <div class="card-body">
+                                    <div class="voice-recorder">
+                                        <p>Press and hold the button to record the order</p>
+                                        <button class="voice-button">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12 1C11.2044 1 10.4413 1.31607 9.87868 1.87868C9.31607 2.44129 9 3.20435 9 4V12C9 12.7956 9.31607 13.5587 9.87868 14.1213C10.4413 14.6839 11.2044 15 12 15C12.7956 15 13.5587 14.6839 14.1213 14.1213C14.6839 13.5587 15 12.7956 15 12V4C15 3.20435 14.6839 2.44129 14.1213 1.87868C13.5587 1.31607 12.7956 1 12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M19 10V12C19 13.8565 18.2625 15.637 16.9497 16.9497C15.637 18.2625 13.8565 19 12 19C10.1435 19 8.36301 18.2625 7.05025 16.9497C5.7375 15.637 5 13.8565 5 12V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M12 19V23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M8 23H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </button>
+                                        <p>Press and hold to record</p>
+                                        
+                                        <div class="audio-visualizer">
+                                            <div class="audio-bar" style="height: 15px;"></div>
+                                            <div class="audio-bar" style="height: 25px;"></div>
+                                            <div class="audio-bar" style="height: 40px;"></div>
+                                            <div class="audio-bar" style="height: 30px;"></div>
+                                            <div class="audio-bar" style="height: 20px;"></div>
+                                            <div class="audio-bar" style="height: 35px;"></div>
+                                            <div class="audio-bar" style="height: 45px;"></div>
+                                            <div class="audio-bar" style="height: 25px;"></div>
+                                            <div class="audio-bar" style="height: 15px;"></div>
+                                            <div class="audio-bar" style="height: 30px;"></div>
+                                            <div class="audio-bar" style="height: 20px;"></div>
+                                            <div class="audio-bar" style="height: 10px;"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="transcription-result">
+                                        <h3>Order Details:</h3>
+                                        <p>Two chicken salads, one with no dressing. One vegetable soup, and a glass of water with no ice.</p>
+                                        <div style="text-align: right; margin-top: 1rem;">
+                                            <button class="btn btn-success">Submit Order</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>Kitchen Display System</h2>
+            <div class="mockup-container">
+                <div class="navbar">
+                    <div class="navbar-brand">Plate Order System</div>
+                    <div class="navbar-nav">
+                        <a href="#" class="nav-link">Home</a>
+                        <a href="#" class="nav-link">Server View</a>
+                        <a href="#" class="nav-link">Kitchen View</a>
+                        <a href="#" class="nav-link">Floor Plan</a>
+                        <a href="#" class="nav-link">Residents</a>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <h2>Kitchen Orders</h2>
+                    
+                    <div class="kds-orders">
+                        <div class="kds-order urgent">
+                            <div class="kds-order-header">
+                                <span>Table 3 - Order #1042</span>
+                                <span class="kds-timer danger">12:45</span>
+                            </div>
+                            <div class="kds-order-body">
+                                <p>One vegetable soup (hot), two grilled chicken (no salt), and a side of steamed vegetables.</p>
+                                <p><strong>Dietary Notes:</strong> Low sodium</p>
+                            </div>
+                            <div class="kds-order-footer">
+                                <span>Server: John D.</span>
+                                <div>
+                                    <button class="btn btn-primary">Start</button>
+                                    <button class="btn btn-success">Complete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="kds-order in-progress">
+                            <div class="kds-order-header">
+                                <span>Table 5 - Order #1041</span>
+                                <span class="kds-timer warning">08:20</span>
+                            </div>
+                            <div class="kds-order-body">
+                                <p>Two chicken salads, one with no dressing. One vegetable soup, and a glass of water with no ice.</p>
+                            </div>
+                            <div class="kds-order-footer">
+                                <span>Server: Sarah M.</span>
+                                <div>
+                                    <button class="btn btn-success">Complete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="kds-order">
+                            <div class="kds-order-header">
+                                <span>Table 8 - Order #1040</span>
+                                <span class="kds-timer">03:12</span>
+                            </div>
+                            <div class="kds-order-body">
+                                <p>One turkey sandwich with a side of fruit. One coffee with cream, no sugar.</p>
+                                <p><strong>Dietary Notes:</strong> Diabetic</p>
+                            </div>
+                            <div class="kds-order-footer">
+                                <span>Server: John D.</span>
+                                <div>
+                                    <button class="btn btn-primary">Start</button>
+                                    <button class="btn btn-success">Complete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="kds-order completed">
+                            <div class="kds-order-header">
+                                <span>Table 2 - Order #1039</span>
+                                <span class="kds-timer">Completed</span>
+                            </div>
+                            <div class="kds-order-body">
+                                <p>Two eggs scrambled, wheat toast, and orange juice.</p>
+                            </div>
+                            <div class="kds-order-footer">
+                                <span>Server: Sarah M.</span>
+                                <span>Completed at 10:45 AM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>Notifications</h2>
+            <div class="notification notification-success">
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="notification-text">
+                        <h4 class="notification-title">Order Submitted</h4>
+                        <p class="notification-message">Order has been sent to the kitchen successfully.</p>
+                    </div>
+                    <button class="notification-close">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,48 +1,43 @@
-version: '3.8'
+version: '3'
 
 services:
-  backend:
-    build: 
+  app:
+    build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     ports:
-      - "10000:10000"
-    volumes:
-      - ./restaurant.db:/app/restaurant.db
-      - ./src:/app/src
+      - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./restaurant.db
-      - PYTHONPATH=/app
-      - PORT=10000
+      - PORT=8000
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - DATABASE_URL=sqlite:///./production.db
+      - SECRET_KEY=${SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - API_V1_STR=/api/v1
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
-      - SENTRY_DSN=${SENTRY_DSN}
-    depends_on:
-      - redis
-    command: uvicorn main:app --host 0.0.0.0 --port 10000 --reload
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "3000:3000"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - REACT_APP_API_URL=http://localhost:10000
-      - PORT=3000
-      - NODE_OPTIONS=--max-old-space-size=4096
-    depends_on:
-      - backend
+      - ./data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  redis:
-    image: redis:latest
+  nginx:
+    image: nginx:alpine
+    restart: always
     ports:
-      - "6379:6379"
+      - "80:80"
+      - "443:443"
     volumes:
-      - redis_data:/data
-
-volumes:
-  redis_data: 
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/www:/var/www/html
+    depends_on:
+      - app

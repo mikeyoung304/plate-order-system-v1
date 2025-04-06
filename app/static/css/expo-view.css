@@ -1,0 +1,516 @@
+/**
+ * Expo View CSS
+ * Styles for the expo view for all orders
+ */
+
+.expo-view-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  margin: 0;
+  color: #212529;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filter-group label {
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+/* Floor Plan Overview */
+.floor-plan-overview {
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.floor-plan-overview h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #212529;
+}
+
+.floor-plan-container {
+  height: 300px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
+.floor-plan {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.3s ease;
+  transform-origin: center center;
+}
+
+/* Tables Container */
+.tables-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Table Styles */
+.table {
+  position: absolute;
+  background-color: #ffffff;
+  border: 2px solid #6c757d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 1;
+}
+
+.table.selected {
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5);
+  z-index: 2;
+}
+
+.table-square {
+  border-radius: 4px;
+}
+
+.table-rectangle {
+  border-radius: 4px;
+}
+
+.table-circle {
+  border-radius: 50%;
+}
+
+.table-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+  font-size: 14px;
+  color: #212529;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Table Status Colors */
+.table-available {
+  border-color: #28a745;
+}
+
+.table-reserved {
+  border-color: #ffc107;
+}
+
+.table-out_of_service {
+  border-color: #dc3545;
+}
+
+/* Table with orders */
+.has-new-orders {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+.has-in-progress-orders {
+  background-color: rgba(255, 193, 7, 0.2);
+}
+
+.has-completed-orders {
+  background-color: rgba(40, 167, 69, 0.2);
+}
+
+/* Order count badge */
+.order-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #dc3545;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* Orders List */
+.orders-container {
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.orders-container h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #212529;
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 10px;
+}
+
+/* Order Card */
+.order-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  border-left: 5px solid #6c757d;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.order-status-new {
+  border-left-color: #dc3545;
+}
+
+.order-status-in_progress {
+  border-left-color: #ffc107;
+}
+
+.order-status-completed {
+  border-left-color: #28a745;
+}
+
+.order-type-food.order-status-new {
+  border-left-color: #dc3545;
+}
+
+.order-type-drink.order-status-new {
+  border-left-color: #17a2b8;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.order-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-table {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.order-seat {
+  font-size: 14px;
+  color: #6c757d;
+  background-color: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.order-type-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #ffffff;
+}
+
+.order-type-badge.food {
+  background-color: #dc3545;
+}
+
+.order-type-badge.drink {
+  background-color: #17a2b8;
+}
+
+.order-time {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.order-content {
+  padding: 16px;
+  flex-grow: 1;
+}
+
+.order-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.dietary-notes {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dietary-note {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.order-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #6c757d;
+}
+
+.order-status-new .status-indicator {
+  background-color: #dc3545;
+}
+
+.order-status-in_progress .status-indicator {
+  background-color: #ffc107;
+}
+
+.order-status-completed .status-indicator {
+  background-color: #28a745;
+}
+
+.order-type-drink.order-status-new .status-indicator {
+  background-color: #17a2b8;
+}
+
+.status-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.order-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Order Details Modal */
+.order-details {
+  padding: 10px 0;
+}
+
+.order-info p {
+  margin-bottom: 8px;
+}
+
+.order-content h6 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.whitespace-pre-line {
+  white-space: pre-line;
+}
+
+/* Loading and Error States */
+.loading-indicator, .error-message, .no-orders-message, .no-floor-plan-message, .no-tables-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  grid-column: 1 / -1;
+  height: 100%;
+}
+
+.loading-indicator .spinner-border {
+  margin-bottom: 16px;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 350px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.notification-content {
+  display: flex;
+  padding: 16px;
+}
+
+.notification-icon {
+  flex: 0 0 40px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.notification-text {
+  flex: 1;
+}
+
+.notification-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.notification-message {
+  margin: 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #adb5bd;
+}
+
+.notification-close:hover {
+  color: #6c757d;
+}
+
+/* Notification Types */
+.notification-success .notification-icon {
+  color: #28a745;
+}
+
+.notification-error .notification-icon {
+  color: #dc3545;
+}
+
+.notification-warning .notification-icon {
+  color: #ffc107;
+}
+
+.notification-info .notification-icon {
+  color: #17a2b8;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-controls {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .orders-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .floor-plan-container {
+    height: 250px;
+  }
+}
+
+/* iPad Optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .expo-view-container {
+    padding: 15px;
+  }
+  
+  .orders-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+  
+  .order-card {
+    min-height: 200px;
+  }
+  
+  .order-actions button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+}

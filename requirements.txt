@@ -1,67 +1,10 @@
-# Core dependencies
-fastapi>=0.68.0
+echo "fastapi>=0.68.0
 uvicorn>=0.15.0
-pydantic>=2.0.0
+sqlalchemy>=1.4.23
+pydantic>=2.3.0
 pydantic-settings>=2.0.0
 python-dotenv>=0.19.0
-sqlalchemy>=1.4.0
-alembic>=1.7.0
-
-# Audio processing
-pyaudio>=0.2.11
-wave>=0.0.2
-
-# API and networking
-aiohttp>=3.8.0
-tenacity>=8.0.0
-redis>=4.0.0
-
-# Monitoring and metrics
-prometheus-client>=0.12.0
-sentry-sdk>=1.5.0
-
-# Testing
-pytest>=6.2.5
-pytest-asyncio>=0.16.0
-pytest-cov>=2.12.1
-httpx>=0.23.0
-
-# Development
-black>=21.7b0
-isort>=5.9.3
-flake8>=3.9.2
-mypy>=0.910
-
-# Environment and configuration
-python-dotenv==1.0.0
-pydantic==2.3.0
-
-# Database
-sqlalchemy==2.0.20
-alembic==1.12.0
-psycopg2-binary==2.9.7  # PostgreSQL adapter
-
-# Authentication and security
-python-jose==3.3.0
-passlib==1.7.4
-bcrypt==4.0.1
-python-multipart==0.0.6
-
-# Web and API
-websockets==11.0.3
-aiofiles==23.1.0
-jinja2==3.1.2
-itsdangerous==2.1.2
-
-# Processing and utilities
-requests==2.31.0
-numpy==1.25.2
-pandas==2.1.0
-python-dateutil==2.8.2
-
-# Speech to text (for production)
-# openai==0.28.0 # Replaced by Deepgram
-deepgram-sdk>=3.0.0,<4.0.0 # Reverting to latest v3 stable
-
-# Monitoring and logging
-prometheus-client==0.17.1
+python-multipart>=0.0.5
+aiofiles>=0.7.0
+jinja2>=3.0.1
+websockets>=10.0" > requirements.txt

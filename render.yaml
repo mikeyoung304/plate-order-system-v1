@@ -1,15 +1,36 @@
 services:
+  # Web service
   - type: web
     name: plate-order-system
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.12
-      - key: OPENAI_API_KEY
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        value: sqlite:///./production.db
+      - key: SECRET_KEY
+        fromDatabase:
+          name: plate-order-system-db
+          property: secret_key
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60
+      - key: API_V1_STR
+        value: /api/v1
+      - key: DEEPGRAM_API_KEY
         sync: false
-      - key: ADMIN_USERNAME
-        value: admin
-      - key: ADMIN_PASSWORD
-        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
+
+databases:
+  - name: plate-order-system-db
+    databaseName: plate_order_system
+    user: plate_order_system_user
+    plan: free

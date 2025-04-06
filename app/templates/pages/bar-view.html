@@ -1,0 +1,104 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Bar View - Plate Order System{% endblock %}
+
+{% block meta_description %}Bar display system for drink orders in assisted living facilities{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bar-view.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="bar-view-container">
+    <div class="header">
+        <h1>Drink Orders</h1>
+        <div class="controls">
+            <div class="filter-controls">
+                <select id="status-filter" class="form-select">
+                    <option value="all">All Orders</option>
+                    <option value="new" selected>New Orders</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <button id="refresh-btn" class="btn btn-outline-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M23 20V14H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M20.49 9C19.9828 7.56678 19.1209 6.2854 17.9845 5.27542C16.8482 4.26543 15.4745 3.55976 13.9917 3.22426C12.5089 2.88875 10.9652 2.93434 9.50481 3.35677C8.04437 3.77921 6.71475 4.56471 5.64 5.64L1 10M23 14L18.36 18.36C17.2853 19.4353 15.9556 20.2208 14.4952 20.6432C13.0348 21.0657 11.4911 21.1112 10.0083 20.7757C8.52547 20.4402 7.1518 19.7346 6.01547 18.7246C4.87913 17.7146 4.01717 16.4332 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="orders-container">
+        <div id="orders-grid" class="orders-grid">
+            <!-- Orders will be dynamically added here -->
+            <div class="loading-indicator">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>Loading orders...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="order-details-modal" tabindex="-1" aria-labelledby="order-details-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="order-details-modal-label">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="order-details">
+                    <div class="order-info">
+                        <p><strong>Table:</strong> <span id="modal-table-name"></span></p>
+                        <p><strong>Seat:</strong> <span id="modal-seat-number"></span></p>
+                        <p><strong>Time:</strong> <span id="modal-order-time"></span></p>
+                    </div>
+                    <div class="order-content">
+                        <h6>Order:</h6>
+                        <p id="modal-order-content" class="whitespace-pre-line"></p>
+                    </div>
+                    <div class="dietary-notes" id="modal-dietary-notes">
+                        <!-- Dietary notes will be added here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="modal-start-btn" class="btn btn-primary">Start Preparing</button>
+                <button type="button" id="modal-complete-btn" class="btn btn-success">Mark as Complete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Component -->
+<div id="notification" class="notification notification-success" style="display: none;">
+    <div class="notification-content">
+        <div class="notification-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="notification-text">
+            <h4 class="notification-title">Success</h4>
+            <p class="notification-message">Order status updated successfully!</p>
+        </div>
+        <button id="notification-close" class="notification-close" aria-label="Close notification">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/bar-view.js') }}"></script>
+{% endblock %}

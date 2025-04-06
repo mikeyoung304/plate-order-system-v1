@@ -1,0 +1,620 @@
+/* iPad-Specific CSS for Server View */
+
+:root {
+  /* Color palette */
+  --primary-blue: #0072d6;
+  --accent-orange: #ff7a00;
+  --success-green: #10b981;
+  --warning-yellow: #f59e0b;
+  --error-red: #ef4444;
+  --neutral-gray: #6b7280;
+  --background-light: #f8fafc;
+  --text-dark: #1e293b;
+  
+  /* iPad-specific variables */
+  --ipad-touch-target: 44px;
+  --ipad-large-touch-target: 60px;
+  --ipad-safe-area-bottom: env(safe-area-inset-bottom, 20px);
+  --ipad-safe-area-top: env(safe-area-inset-top, 20px);
+}
+
+/* Base iPad optimizations */
+.ipad-server {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-dark);
+  background-color: var(--background-light);
+  padding-top: var(--ipad-safe-area-top);
+  padding-bottom: var(--ipad-safe-area-bottom);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* Server header */
+.server-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: white;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.server-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.server-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.server-action-button {
+  min-width: var(--ipad-touch-target);
+  min-height: var(--ipad-touch-target);
+  border-radius: 8px;
+  border: none;
+  background-color: var(--primary-blue);
+  color: white;
+  font-weight: 500;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Floor plan container */
+.floor-plan-container {
+  padding: 16px;
+  overflow: hidden;
+  background-color: white;
+  border-radius: 12px;
+  margin: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Floor plan */
+.floor-plan {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  touch-action: manipulation;
+}
+
+/* Portrait mode - 3 columns */
+@media (orientation: portrait) {
+  .floor-plan {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Landscape mode - 5 columns */
+@media (orientation: landscape) {
+  .floor-plan {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Table */
+.table {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background-color: var(--success-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.table:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Table status indicators */
+.table.available {
+  background-color: var(--success-green);
+}
+
+.table.occupied {
+  background-color: var(--primary-blue);
+}
+
+.table.reserved {
+  background-color: var(--warning-yellow);
+}
+
+.table.needs-cleaning {
+  background-color: var(--neutral-gray);
+}
+
+/* Selected table */
+.table.selected {
+  border: 3px solid var(--accent-orange);
+  transform: scale(1.05);
+}
+
+/* Table badge */
+.table-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: var(--error-red);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Selected table info */
+.selected-table-info {
+  background-color: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 16px 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.table-number {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.table-residents {
+  color: var(--neutral-gray);
+}
+
+/* Voice recording section */
+.voice-recording-section {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 0 16px 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Voice button */
+.voice-button-container {
+  margin: 20px 0;
+}
+
+.voice-record-button {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: var(--primary-blue);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.voice-record-button:active {
+  transform: scale(0.95);
+}
+
+.voice-record-button.recording {
+  background-color: var(--error-red);
+  animation: pulse 1.5s infinite;
+}
+
+.voice-record-button-icon {
+  font-size: 32px;
+}
+
+/* Audio visualization */
+.audio-visualization {
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-bottom: 20px;
+}
+
+.audio-bar {
+  width: 4px;
+  background-color: var(--primary-blue);
+  border-radius: 2px;
+  height: 5px;
+  transition: height 0.1s ease;
+}
+
+/* Transcription display */
+.transcription-display {
+  width: 100%;
+  min-height: 80px;
+  background-color: var(--background-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Dietary alert */
+.dietary-alert {
+  width: 100%;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dietary-alert-icon {
+  color: var(--error-red);
+  font-size: 20px;
+}
+
+.dietary-alert-text {
+  font-weight: 500;
+  color: var(--error-red);
+}
+
+/* Order confirmation buttons */
+.order-confirmation-buttons {
+  display: flex;
+  width: 100%;
+  gap: 16px;
+}
+
+.order-confirmation-button {
+  flex: 1;
+  min-height: var(--ipad-large-touch-target);
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.confirm-button {
+  background-color: var(--success-green);
+  color: white;
+}
+
+.cancel-button {
+  background-color: var(--neutral-gray);
+  color: white;
+}
+
+/* Recent orders section */
+.recent-orders-section {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 0 16px 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* Recent order */
+.recent-order {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.recent-order:last-child {
+  border-bottom: none;
+}
+
+.recent-order-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.recent-order-table {
+  font-weight: 500;
+}
+
+.recent-order-time {
+  color: var(--neutral-gray);
+  font-size: 14px;
+}
+
+.recent-order-items {
+  color: var(--neutral-gray);
+  font-size: 14px;
+}
+
+/* Bottom navigation */
+.bottom-navigation {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0;
+  padding-bottom: calc(12px + var(--ipad-safe-area-bottom));
+  border-top: 1px solid rgba(0,0,0,0.1);
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: var(--ipad-touch-target);
+  min-height: var(--ipad-touch-target);
+  color: var(--neutral-gray);
+}
+
+.nav-item.active {
+  color: var(--primary-blue);
+}
+
+.nav-item-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.nav-item-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Table options menu */
+.table-options-menu {
+  position: absolute;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 8px 0;
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.table-option {
+  padding: 14px 16px;
+  font-weight: 500;
+}
+
+.table-option:active {
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* Status dialog */
+.status-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.dialog-content {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.dialog-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.status-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.status-option {
+  min-height: var(--ipad-touch-target);
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background-color: white;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-option:active {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.dialog-button {
+  width: 100%;
+  min-height: var(--ipad-touch-target);
+  border-radius: 8px;
+  border: none;
+  background-color: var(--primary-blue);
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+/* Toast notifications */
+.toast-container {
+  position: fixed;
+  bottom: calc(20px + var(--ipad-safe-area-bottom) + 60px); /* Above bottom nav */
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.toast {
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  max-width: 90%;
+  pointer-events: auto;
+}
+
+.toast.success {
+  background-color: var(--success-green);
+}
+
+.toast.error {
+  background-color: var(--error-red);
+}
+
+/* iPad-specific touch feedback */
+button:active, 
+.nav-item:active,
+.table-option:active {
+  opacity: 0.8;
+}
+
+/* iPad Pro optimizations */
+@media (min-width: 1024px) {
+  .floor-plan {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .server-title {
+    font-size: 28px;
+  }
+  
+  .voice-record-button {
+    width: 100px;
+    height: 100px;
+    border-radius: 50px;
+  }
+  
+  .voice-record-button-icon {
+    font-size: 40px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-light: #1a1a1a;
+    --text-dark: #ffffff;
+  }
+  
+  .ipad-server {
+    color: white;
+  }
+  
+  .server-header,
+  .floor-plan-container,
+  .selected-table-info,
+  .voice-recording-section,
+  .recent-orders-section,
+  .bottom-navigation,
+  .table-options-menu,
+  .dialog-content {
+    background-color: #2a2a2a;
+  }
+  
+  .transcription-display {
+    background-color: #333333;
+  }
+  
+  .recent-order {
+    border-bottom-color: rgba(255,255,255,0.1);
+  }
+  
+  .bottom-navigation {
+    border-top-color: rgba(255,255,255,0.1);
+  }
+  
+  .status-option {
+    background-color: #333333;
+    border-color: #444444;
+  }
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Accessibility enhancements */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus indicators for keyboard navigation */
+button:focus-visible,
+.nav-item:focus-visible,
+.table:focus-visible {
+  outline: 2px solid var(--accent-orange);
+  outline-offset: 2px;
+}
+
+/* Loading indicators */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 114, 214, 0.2);
+  border-left-color: var(--primary-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

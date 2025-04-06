@@ -1,3 +1,0 @@
-This is a placeholder for the start.mp3 sound file.
-In a production environment, this would be replaced with an actual MP3 file.
-This sound plays when an order is started (moved to "In Progress").
