@@ -1,0 +1,244 @@
+/* Voice Recognition Styling - Completely rewritten to avoid conflicts */
+
+.voice-record-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  border: 2px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  outline: none;
+}
+
+.voice-record-button:hover {
+  background-color: #e8e8e8;
+  transform: scale(1.05);
+}
+
+.voice-record-button:active {
+  transform: scale(0.95);
+}
+
+.voice-record-button.recording {
+  background-color: #ff5252;
+  border-color: #ff0000;
+  animation: pulse 1.5s infinite;
+}
+
+.voice-record-button-icon {
+  font-size: 24px;
+  color: #555;
+  font-style: normal;
+}
+
+.voice-record-button.recording .voice-record-button-icon {
+  color: white;
+}
+
+.audio-visualization {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 60px;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+  gap: 2px;
+  background-color: rgba(66, 133, 244, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.voice-audio-bar {
+  width: 4px;
+  height: 5px;
+  background-color: #4285f4;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.1s ease;
+}
+
+.transcription-display {
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin: 15px 0;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.order-confirmation-buttons {
+  display: none;
+  justify-content: center;
+  gap: 15px;
+  margin: 15px 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.confirm-button,
+.cancel-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+}
+
+.confirm-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.confirm-button:hover {
+  background-color: #45a049;
+}
+
+.cancel-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #d32f2f;
+}
+
+.dietary-alert {
+  display: none;
+  background-color: #ffeb3b;
+  border-left: 4px solid #ffc107;
+  padding: 12px;
+  margin: 15px 0;
+  border-radius: 4px;
+  align-items: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.dietary-alert-icon {
+  margin-right: 10px;
+  font-size: 20px;
+  color: #ff9800;
+}
+
+.dietary-alert-text {
+  font-weight: 500;
+  color: #5d4037;
+}
+
+.recording-indicator {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 0, 0, 0.8);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: 500;
+  z-index: 1000;
+  animation: pulse 1.5s infinite;
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+}
+
+.toast {
+  padding: 12px 16px;
+  border-radius: 6px;
+  background-color: #333;
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  margin-top: 5px;
+}
+
+.toast.success {
+  background-color: #4caf50;
+}
+
+.toast.error {
+  background-color: #f44336;
+}
+
+.toast.warning {
+  background-color: #ff9800;
+}
+
+.toast.info {
+  background-color: #2196f3;
+}
+
+.permission-error {
+  background-color: #ffebee;
+  border-left: 4px solid #f44336;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.permission-error p {
+  margin: 5px 0;
+}
+
+.permission-error ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+  }
+}
+
+/* iPad-specific optimizations */
+@media (max-width: 1024px) {
+  .voice-record-button {
+    width: 70px;
+    height: 70px;
+  }
+
+  .voice-record-button-icon {
+    font-size: 28px;
+  }
+
+  .transcription-display {
+    font-size: 18px;
+    padding: 15px;
+  }
+
+  .confirm-button,
+  .cancel-button {
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+}
