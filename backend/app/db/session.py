@@ -7,15 +7,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Get the database URL from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Use the database URL from application settings (with default fallback)
+DATABASE_URL = settings.DATABASE_URL
 
 # Create SQLAlchemy engine with proper configuration
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    connect_args={"sslmode": "require"}  # Required for Supabase
-)
+if DATABASE_URL.startswith("sqlite"):
+    # Use SQLite without SSL
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+    )
+else:
+    # Use PostgreSQL with SSL (e.g., Supabase)
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        connect_args={"sslmode": "require"},
+    )
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

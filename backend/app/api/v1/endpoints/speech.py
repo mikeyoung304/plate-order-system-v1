@@ -4,12 +4,15 @@ import json
 import base64
 from typing import Dict, Any, Optional, List
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, BackgroundTasks, File, UploadFile
+from fastapi.responses import JSONResponse  # noqa: F401 (unused import retained for backward compatibility)
 
 from app.websockets.connection_manager import ConnectionManager
 from app.domain.services.speech_service import SpeechService
 from app.domain.services.deepgram_service import DeepgramService
+import io
+import openai
+from app.core.config import settings
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -225,76 +228,31 @@ async def cleanup_connection(connection_id: str, deepgram_service=None):
     if connection_id in active_deepgram_services:
         del active_deepgram_services[connection_id]
 
-@router.post("/api/v1/speech/transcribe")
-async def transcribe_audio(request_data: Dict[str, Any], background_tasks: BackgroundTasks):
+################################################################################
+# REST API endpoint for Whisper transcription using OpenAI
+################################################################################
+@router.post("/speech/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
     """
-    REST API endpoint for transcribing audio data.
-    
-    Args:
-        request_data: Dictionary containing audio_data (base64 encoded), format, and optional context
-        
-    Returns:
-        Transcription result
+    Transcribe an audio file using OpenAI Whisper API.
     """
     try:
-        # Validate request data
-        if "audio_data" not in request_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing audio_data field"
-            )
-        
-        # Get audio data and format
-        audio_data = request_data["audio_data"]
-        audio_format = request_data.get("format", "wav")
-        
-        # Get table context if provided
-        table_id = request_data.get("table_id")
-        seat_number = request_data.get("seat_number")
-        
-        # Process audio data
-        result = await speech_service.process_audio_data(
-            audio_data, 
-            table_id=table_id, 
-            seat_number=seat_number
+        # Ensure OpenAI key is set
+        if settings.OPENAI_API_KEY:
+            openai.api_key = settings.OPENAI_API_KEY
+
+        # Perform transcription
+        transcript = openai.Audio.transcribe(
+            model="whisper-1",
+            file=file.file
         )
-        
-        # Check for success
-        if not result.get("success", False):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.get("error", "Unknown error")
-            )
-        
-        # Add cleanup to background task
-        if "temp_file_path" in result:
-            background_tasks.add_task(cleanup_temp_file, result["temp_file_path"])
-            # Remove path from result before returning
-            del result["temp_file_path"]
-        
-        # Return transcription result
-        return JSONResponse(content=result)
-    
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
-    
+        text = transcript.get("text", "").strip()
+        return {"text": text}
     except Exception as e:
-        # Log and return error
-        logger.error(f"Error transcribing audio: {e}")
+        logger.error(f"Error transcribing audio via Whisper: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error transcribing audio: {str(e)}"
+            detail=str(e)
         )
-
-async def cleanup_temp_file(file_path: str):
-    """Clean up temporary file in background"""
-    import os
-    try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            logger.debug(f"Removed temporary file: {file_path}")
-    except Exception as e:
-        logger.error(f"Error removing temporary file {file_path}: {e}")
 
 

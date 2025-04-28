@@ -5,7 +5,7 @@ from app.api.v1.dependencies.db import get_db
 from app.db.repositories.floor_plans import FloorPlanRepository
 from app.api.v1.schemas import (
     FloorPlan, FloorPlanCreate, FloorPlanUpdate,
-    Table, TableCreate, TableUpdate,
+    Table, TableCreate, TableUpdate, TableBulk,
     Seat, SeatCreate, SeatUpdate
 )
 
@@ -76,6 +76,50 @@ def delete_floor_plan(
     if not floor_plan:
         raise HTTPException(status_code=404, detail="Floor plan not found")
     return floor_plan_repo.remove(id=floor_plan_id)
+ 
+@router.put("/floor-plans/{floor_plan_id}/tables", response_model=List[Table])
+def set_floor_plan_tables(
+    floor_plan_id: str,
+    tables_in: List[TableBulk],
+    db: Session = Depends(get_db)
+):
+    """
+    Replace tables for a specific floor plan: create, update, and delete tables in bulk.
+    """
+    floor_plan_repo = FloorPlanRepository(db)
+    floor_plan = floor_plan_repo.get(id=floor_plan_id)
+    if not floor_plan:
+        raise HTTPException(status_code=404, detail="Floor plan not found")
+    # Fetch existing tables
+    existing_tables = floor_plan_repo.get_tables(floor_plan_id=floor_plan_id)
+    existing_ids = {t.id for t in existing_tables}
+    incoming_ids = {tbl.id for tbl in tables_in if tbl.id}
+    # Delete tables not in incoming list
+    for tbl in existing_tables:
+        if tbl.id not in incoming_ids:
+            floor_plan_repo.remove_table(id=tbl.id)
+    result_tables = []
+    # Upsert incoming tables
+    for tbl in tables_in:
+        if tbl.id:
+            # Update existing table
+            db_tbl = floor_plan_repo.get_table(id=tbl.id)
+            if db_tbl:
+                data = tbl.dict(exclude_unset=True)
+                data.pop("id", None)
+                updated = floor_plan_repo.update_table(db_obj=db_tbl, obj_in=data)
+                result_tables.append(updated)
+            else:
+                # Create new if referenced id not found
+                create_in = TableCreate(floor_plan_id=floor_plan_id, **tbl.dict(exclude={"id"}))
+                created = floor_plan_repo.create_table(obj_in=create_in)
+                result_tables.append(created)
+        else:
+            # Create new table
+            create_in = TableCreate(floor_plan_id=floor_plan_id, **tbl.dict(exclude={"id"}))
+            created = floor_plan_repo.create_table(obj_in=create_in)
+            result_tables.append(created)
+    return result_tables
 
 @router.get("/floor-plans/{floor_plan_id}/tables", response_model=List[Table])
 def get_tables_for_floor_plan(

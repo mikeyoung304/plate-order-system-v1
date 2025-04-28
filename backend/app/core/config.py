@@ -17,16 +17,8 @@ class Settings(BaseSettings):
     PORT: int = int(os.getenv("PORT", "8000"))
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     
-    # CORS Configuration
-    CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-
-    @validator("CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    # CORS Configuration - comma-separated origins
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     # Database Configuration
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/postgres")
@@ -39,12 +31,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # Supabase settings
-    NEXT_PUBLIC_SUPABASE_URL: str
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: str
+    # Supabase settings (optional)
+    NEXT_PUBLIC_SUPABASE_URL: Optional[str] = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: Optional[str] = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
     
     # Voice recognition settings
     DEEPGRAM_API_KEY: Optional[str] = os.getenv("DEEPGRAM_API_KEY")
+    # OpenAI API Key for Whisper transcription
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     
     # Application settings
     PROJECT_NAME: str = "Plate Order System"
@@ -55,7 +49,6 @@ class Settings(BaseSettings):
     
     class Config:
         case_sensitive = True
-        env_file = ".env"
 
 
 settings = Settings()

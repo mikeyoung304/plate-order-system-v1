@@ -81,7 +81,8 @@ class FloorPlanRepository:
     def create_table(self, *, obj_in: TableCreate) -> Table:
         """Create a new table"""
         obj_in_data = jsonable_encoder(obj_in)
-        db_obj = Table(**obj_in_data, id=str(uuid.uuid4()))
+        # Remove explicit ID assignment to let database auto-generate Integer ID
+        db_obj = Table(**obj_in_data)
         self.db.add(db_obj)
         self.db.commit()
         self.db.refresh(db_obj)
@@ -121,7 +122,8 @@ class FloorPlanRepository:
     def create_seat(self, *, obj_in: SeatCreate) -> Seat:
         """Create a new seat"""
         obj_in_data = jsonable_encoder(obj_in)
-        db_obj = Seat(**obj_in_data, id=str(uuid.uuid4()))
+        # Remove explicit ID assignment to let database auto-generate Integer ID
+        db_obj = Seat(**obj_in_data)
         self.db.add(db_obj)
         self.db.commit()
         self.db.refresh(db_obj)

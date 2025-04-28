@@ -1,24 +1,21 @@
+// File: frontend/components/floor-plan-view.tsx
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Info } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-
-type Table = {
-  id: string
-  type: "circle" | "rectangle" | "square"
-  x: number
-  y: number
-  width: number
-  height: number
-  seats: number
-  label: string
-}
+import { supabase } from "@/lib/supabaseClient"
+import { RealtimeChannel } from "@supabase/supabase-js"
+import {
+  Table,
+  BackendTable,
+  mapBackendTableToFrontend,
+} from "@/lib/floor-plan-utils"
+import { Button } from "@/components/ui/button" // Added Button import
 
 type FloorPlanViewProps = {
   floorPlanId: string
@@ -35,691 +32,391 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const animationFrameRef = useRef<number | null>(null);
   const { toast } = useToast()
 
-  // Create random spotlight positions with colors
+  // Create random spotlight positions
   useEffect(() => {
-    const spots = []
-    for (let i = 0; i < 5; i++) {
-      spots.push({
-        x: Math.random() * canvasSize.width,
-        y: Math.random() * canvasSize.height,
-        color: i % 2 === 0 ? "teal" : "amber", // Alternate between teal and amber
-      })
-    }
-    setSpotlights(spots)
-  }, [canvasSize])
+    const spots = Array.from({ length: 5 }, (_, i) => ({
+      x: Math.random() * canvasSize.width,
+      y: Math.random() * canvasSize.height,
+      color: i % 2 === 0 ? "teal" : "amber",
+    }));
+    setSpotlights(spots);
+  }, [canvasSize]);
 
-  // Adjust canvas size based on container
+  // Adjust canvas size
   useEffect(() => {
     const updateCanvasSize = () => {
       if (containerRef.current) {
-        const width = Math.min(800, containerRef.current.clientWidth - 20)
-        setCanvasSize({
-          width,
-          height: width * 0.75, // 4:3 aspect ratio
-        })
+        const width = Math.min(800, containerRef.current.clientWidth - 20);
+        setCanvasSize({ width, height: width * 0.75 });
       }
+    };
+    updateCanvasSize();
+    window.addEventListener("resize", updateCanvasSize);
+    return () => window.removeEventListener("resize", updateCanvasSize);
+  }, []);
+
+  // --- Data Fetching and Real-time Sync ---
+  const fetchTables = useCallback(async () => {
+    if (!floorPlanId) {
+      console.warn("[FloorPlanView] floorPlanId missing.");
+      setTables([]); setIsLoading(false); setError(null); return;
     }
-
-    updateCanvasSize()
-    window.addEventListener("resize", updateCanvasSize)
-
-    return () => {
-      window.removeEventListener("resize", updateCanvasSize)
-    }
-  }, [floorPlanId])
-
-  // Load tables from localStorage
-  useEffect(() => {
-    setIsLoading(true)
-    setError(null)
+    console.log(`[FloorPlanView] Fetching tables for: ${floorPlanId}`);
+    setError(null);
+    // Only set loading true on initial/retry, not on realtime update
+    // setIsLoading(true); // Managed in the effect below
 
     try {
-      const savedTables = localStorage.getItem("tables")
-      if (savedTables) {
-        const allTables = JSON.parse(savedTables)
-        if (allTables[floorPlanId]) {
-          setTables(allTables[floorPlanId])
-        } else {
-          // Create a default table if none exists
-          const defaultTable: Table = {
-            id: `table-${Date.now()}`,
-            type: "circle",
-            x: 200,
-            y: 200,
-            width: 100,
-            height: 100,
-            seats: 4,
-            label: "Table 1",
-          }
-
-          const updatedTables = {
-            ...allTables,
-            [floorPlanId]: [defaultTable],
-          }
-
-          localStorage.setItem("tables", JSON.stringify(updatedTables))
-          setTables([defaultTable])
-        }
-      } else {
-        // Initialize with a default table
-        const defaultTable: Table = {
-          id: `table-${Date.now()}`,
-          type: "circle",
-          x: 200,
-          y: 200,
-          width: 100,
-          height: 100,
-          seats: 4,
-          label: "Table 1",
-        }
-
-        const initialTables = {
-          [floorPlanId]: [defaultTable],
-        }
-
-        localStorage.setItem("tables", JSON.stringify(initialTables))
-        setTables([defaultTable])
-      }
-    } catch (error) {
-      console.error("Error loading tables:", error)
-      setError("Failed to load floor plan data. Please try again.")
-
-      // Create a default table if there's an error
-      const defaultTable: Table = {
-        id: `table-${Date.now()}`,
-        type: "circle",
-        x: 200,
-        y: 200,
-        width: 100,
-        height: 100,
-        seats: 4,
-        label: "Table 1",
-      }
-      setTables([defaultTable])
+      const response = await fetch(`/api/v1/floor-plans/${floorPlanId}/tables`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const backendTables: BackendTable[] = await response.json();
+      const frontendTables = backendTables.map(mapBackendTableToFrontend);
+      console.log(`[FloorPlanView] Loaded ${frontendTables.length} tables.`);
+      setTables(frontendTables);
+    } catch (err: any) {
+      console.error("[FloorPlanView] Error loading tables:", err);
+      setError("Failed to load floor plan. Please try refreshing.");
+      setTables([]);
+      toast({ title: "Error Loading Floor Plan", description: err.message, variant: "destructive" });
     } finally {
-      setIsLoading(false)
+      if (isLoading) setIsLoading(false); // Only change loading state if it was true
     }
-  }, [floorPlanId])
+  }, [floorPlanId, toast, isLoading]); // Include isLoading
+
+  // Effect for initial load and real-time subscription
+  useEffect(() => {
+    setIsLoading(true); // Set loading true for initial fetch
+    fetchTables();
+
+    const channelName = `tables-changes-fp-${floorPlanId}`;
+    console.log(`[FloorPlanView] Subscribing to: ${channelName}`);
+    const channel: RealtimeChannel = supabase
+      .channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables', filter: `floor_plan_id=eq.${floorPlanId}` },
+        (payload) => {
+          console.log('[FloorPlanView] Realtime change:', payload);
+          toast({ title: "Floor Plan Updated", description: "Refreshing layout.", duration: 2000 });
+          fetchTables(); // Re-fetch on change
+        })
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') console.log(`[FloorPlanView] Subscribed to ${channelName}`);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error(`[FloorPlanView] Subscription error:`, status, err);
+          setError("Real-time connection error.");
+          toast({ title: "Real-time Error", description: "Updates may be delayed.", variant: "warning" });
+        }
+      });
+    return () => { console.log(`[FloorPlanView] Unsubscribing from: ${channelName}`); supabase.removeChannel(channel); };
+  }, [floorPlanId, fetchTables, toast]); // fetchTables is stable
+
+  // Calculate seat positions
+  const calculateSeatPositions = useCallback((type: string, x: number, y: number, width: number, height: number, seats: number) => {
+    const positions: { x: number; y: number }[] = [];
+    const seatOffset = 15; // Fixed offset for simplicity now
+    if (type === "circle") {
+      const radius = width / 2 + seatOffset;
+      const centerX = x + width / 2, centerY = y + height / 2;
+      for (let i = 0; i < seats; i++) { const angle = (i / seats) * 2 * Math.PI - Math.PI / 2; positions.push({ x: centerX + radius * Math.cos(angle), y: centerY + radius * Math.sin(angle) }); }
+    } else {
+      const perimeter = 2 * (width + height); if (seats <= 0) return []; const spacing = perimeter / seats; let currentDistance = spacing / 2;
+      for (let i = 0; i < seats; i++) { let posX = 0, posY = 0; if (currentDistance <= width) { posX = x + currentDistance; posY = y - seatOffset; } else if (currentDistance <= width + height) { posX = x + width + seatOffset; posY = y + (currentDistance - width); } else if (currentDistance <= 2 * width + height) { posX = x + width - (currentDistance - width - height); posY = y + height + seatOffset; } else { posX = x - seatOffset; posY = y + height - (currentDistance - 2 * width - height); } positions.push({ x: posX, y: posY }); currentDistance += spacing; }
+    } return positions;
+  }, []); // Removed zoomLevel dependency
 
   // Draw the floor plan
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas || isLoading) return
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
 
-    // Set canvas dimensions
-    canvas.width = canvasSize.width
-    canvas.height = canvasSize.height
+    if (isLoading || error) { if (animationFrameRef.current) { cancelAnimationFrame(animationFrameRef.current); animationFrameRef.current = null; } return; }
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const drawFrame = (time: number) => {
+      if (!canvasRef.current) return;
+      canvas.width = canvasSize.width; canvas.height = canvasSize.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+      // Background
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height); gradient.addColorStop(0, "rgba(17, 24, 39, 0.95)"); gradient.addColorStop(1, "rgba(10, 15, 25, 0.95)"); ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw sophisticated lounge background
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
-    gradient.addColorStop(0, "rgba(17, 24, 39, 0.95)")
-    gradient.addColorStop(1, "rgba(10, 15, 25, 0.95)")
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+      // Draw tables
+      tables.forEach((table) => {
+        const isHovered = hoveredTable === table.id;
+        const rotationRad = (table.rotation || 0) * (Math.PI / 180);
+        const centerX = table.x + table.width / 2, centerY = table.y + table.height / 2;
+        ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(rotationRad); ctx.translate(-centerX, -centerY);
 
-    // Draw subtle pattern
-    ctx.fillStyle = "rgba(255, 255, 255, 0.02)"
-    const patternSize = 20
-    for (let x = 0; x < canvas.width; x += patternSize) {
-      for (let y = 0; y < canvas.height; y += patternSize) {
-        if ((x + y) % (patternSize * 2) === 0) {
-          ctx.fillRect(x, y, patternSize / 2, patternSize / 2)
-        }
-      }
-    }
+        // Styling
+        const baseColor = "rgba(13, 148, 136, 1)"; const hoverColor = "rgba(56, 189, 174, 1)"; const strokeColor = isHovered ? hoverColor : baseColor;
+        const gradientStart = isHovered ? "rgba(56, 189, 174, 0.4)" : "rgba(13, 148, 136, 0.25)"; const gradientEnd = isHovered ? "rgba(56, 189, 174, 0.2)" : "rgba(13, 148, 136, 0.15)";
+        const tableGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, table.width / 2); tableGradient.addColorStop(0, gradientStart); tableGradient.addColorStop(1, gradientEnd);
+        ctx.fillStyle = tableGradient; ctx.strokeStyle = strokeColor; ctx.lineWidth = isHovered ? 2.5 : 1.5;
 
-    // Draw subtle grid
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.03)"
-    ctx.lineWidth = 1
+        // Shadow
+        ctx.shadowColor = isHovered ? "rgba(56, 189, 174, 0.5)" : "rgba(0, 0, 0, 0.4)"; ctx.shadowBlur = isHovered ? 20 : 10; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = isHovered ? 6 : 4;
 
-    // Draw vertical grid lines
-    for (let x = 0; x < canvas.width; x += 50) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
-      ctx.stroke()
-    }
-
-    // Draw horizontal grid lines
-    for (let y = 0; y < canvas.height; y += 50) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(canvas.width, y)
-      ctx.stroke()
-    }
-
-    // Draw spotlights
-    spotlights.forEach((spot) => {
-      const spotGradient = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, 150)
-
-      if (spot.color === "teal") {
-        spotGradient.addColorStop(0, "rgba(13, 148, 136, 0.1)")
-        spotGradient.addColorStop(1, "rgba(13, 148, 136, 0)")
-      } else {
-        spotGradient.addColorStop(0, "rgba(245, 158, 11, 0.1)")
-        spotGradient.addColorStop(1, "rgba(245, 158, 11, 0)")
-      }
-
-      ctx.fillStyle = spotGradient
-      ctx.beginPath()
-      ctx.arc(spot.x, spot.y, 150, 0, Math.PI * 2)
-      ctx.fill()
-    })
-
-    // Draw tables
-    tables.forEach((table) => {
-      const isHovered = hoveredTable === table.id
-
-      // Create gradient for tables
-      const tableGradient = ctx.createRadialGradient(
-        table.x + table.width / 2,
-        table.y + table.height / 2,
-        0,
-        table.x + table.width / 2,
-        table.y + table.height / 2,
-        table.width / 2,
-      )
-
-      if (isHovered) {
-        tableGradient.addColorStop(0, "rgba(13, 148, 136, 0.4)")
-        tableGradient.addColorStop(1, "rgba(13, 148, 136, 0.2)")
-        ctx.strokeStyle = "rgba(13, 148, 136, 0.8)"
-      } else {
-        tableGradient.addColorStop(0, "rgba(13, 148, 136, 0.25)")
-        tableGradient.addColorStop(1, "rgba(13, 148, 136, 0.15)")
-        ctx.strokeStyle = "rgba(13, 148, 136, 0.4)"
-      }
-
-      ctx.fillStyle = tableGradient
-      ctx.lineWidth = isHovered ? 2 : 1.5
-
-      // Draw table with shadow
-      ctx.shadowColor = "rgba(0, 0, 0, 0.5)"
-      ctx.shadowBlur = 15
-      ctx.shadowOffsetX = 0
-      ctx.shadowOffsetY = 5
-
-      if (table.type === "circle") {
-        const radius = table.width / 2
-        ctx.beginPath()
-        ctx.arc(table.x + radius, table.y + radius, radius, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
-      } else {
-        // Add rounded corners for rectangles and squares
-        const radius = 8
-        ctx.beginPath()
-        ctx.moveTo(table.x + radius, table.y)
-        ctx.lineTo(table.x + table.width - radius, table.y)
-        ctx.quadraticCurveTo(table.x + table.width, table.y, table.x + table.width, table.y + radius)
-        ctx.lineTo(table.x + table.width, table.y + table.height - radius)
-        ctx.quadraticCurveTo(
-          table.x + table.width,
-          table.y + table.height,
-          table.x + table.width - radius,
-          table.y + table.height,
-        )
-        ctx.lineTo(table.x + radius, table.y + table.height)
-        ctx.quadraticCurveTo(table.x, table.y + table.height, table.x, table.y + table.height - radius)
-        ctx.lineTo(table.x, table.y + radius)
-        ctx.quadraticCurveTo(table.x, table.y, table.x + radius, table.y)
-        ctx.fill()
-        ctx.stroke()
-      }
-
-      // Reset shadow
-      ctx.shadowColor = "transparent"
-      ctx.shadowBlur = 0
-      ctx.shadowOffsetX = 0
-      ctx.shadowOffsetY = 0
-
-      // Draw table label with glow effect
-      if (isHovered) {
-        ctx.shadowColor = "rgba(13, 148, 136, 0.7)"
-        ctx.shadowBlur = 10
-      } else {
-        ctx.shadowColor = "rgba(0, 0, 0, 0.7)"
-        ctx.shadowBlur = 3
-      }
-
-      ctx.fillStyle = "#ffffff"
-      ctx.font = isHovered ? "bold 15px var(--font-sans)" : "14px var(--font-sans)"
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
-      ctx.fillText(table.label, table.x + table.width / 2, table.y + table.height / 2)
-
-      // Reset shadow
-      ctx.shadowColor = "transparent"
-      ctx.shadowBlur = 0
-
-      // Draw seat indicators
-      const seatRadius = 4
-      const seatPositions = calculateSeatPositions(table.type, table.x, table.y, table.width, table.height, table.seats)
-
-      // Draw seats
-      seatPositions.forEach((position) => {
-        // Create seat gradient
-        const seatGradient = ctx.createRadialGradient(position.x, position.y, 0, position.x, position.y, seatRadius)
-
-        if (isHovered) {
-          seatGradient.addColorStop(0, "rgba(13, 148, 136, 0.7)")
-          seatGradient.addColorStop(1, "rgba(13, 148, 136, 0.4)")
-          ctx.strokeStyle = "rgba(13, 148, 136, 0.8)"
-        } else {
-          seatGradient.addColorStop(0, "rgba(255, 255, 255, 0.5)")
-          seatGradient.addColorStop(1, "rgba(200, 200, 200, 0.3)")
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"
-        }
-
-        ctx.fillStyle = seatGradient
-        ctx.lineWidth = 1
-
-        // Add subtle shadow to seats
-        ctx.shadowColor = "rgba(0, 0, 0, 0.3)"
-        ctx.shadowBlur = 3
-        ctx.shadowOffsetX = 1
-        ctx.shadowOffsetY = 1
-
-        ctx.beginPath()
-        ctx.arc(position.x, position.y, seatRadius, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
+        // Draw Shape
+        const cornerRadius = 8; ctx.beginPath();
+        if (table.type === "circle") { ctx.arc(centerX, centerY, table.width / 2, 0, Math.PI * 2); }
+        else { ctx.moveTo(table.x + cornerRadius, table.y); ctx.lineTo(table.x + table.width - cornerRadius, table.y); ctx.quadraticCurveTo(table.x + table.width, table.y, table.x + table.width, table.y + cornerRadius); ctx.lineTo(table.x + table.width, table.y + table.height - cornerRadius); ctx.quadraticCurveTo(table.x + table.width, table.y + table.height, table.x + table.width - cornerRadius, table.y + table.height); ctx.lineTo(table.x + cornerRadius, table.y + table.height); ctx.quadraticCurveTo(table.x, table.y + table.height, table.x, table.y + table.height - cornerRadius); ctx.lineTo(table.x, table.y + cornerRadius); ctx.quadraticCurveTo(table.x, table.y, table.x + cornerRadius, table.y); ctx.closePath(); }
+        ctx.fill(); ctx.stroke();
 
         // Reset shadow
-        ctx.shadowColor = "transparent"
-        ctx.shadowBlur = 0
-        ctx.shadowOffsetX = 0
-        ctx.shadowOffsetY = 0
-      })
+        ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
 
-      // Add a subtle pulsing effect to hovered tables
-      if (isHovered) {
-        const pulseSize = 4 + Math.sin(Date.now() / 300) * 2 // Pulsing effect
-        ctx.strokeStyle = "rgba(13, 148, 136, 0.4)"
-        ctx.lineWidth = 1
+        // Draw Label
+        ctx.fillStyle = "#ffffff"; ctx.font = isHovered ? "bold 15px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" : "14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.translate(centerX, centerY); ctx.rotate(-rotationRad); ctx.fillText(table.label, 0, 0); ctx.rotate(rotationRad); ctx.translate(-centerX, -centerY);
 
-        if (table.type === "circle") {
-          const radius = table.width / 2
-          ctx.beginPath()
-          ctx.arc(table.x + radius, table.y + radius, radius + pulseSize, 0, Math.PI * 2)
-          ctx.stroke()
-        } else {
-          ctx.beginPath()
-          ctx.rect(table.x - pulseSize / 2, table.y - pulseSize / 2, table.width + pulseSize, table.height + pulseSize)
-          ctx.stroke()
-        }
-      }
-    })
+        // Draw Seats
+        const seatRadius = 5; const seatPositions = calculateSeatPositions(table.type, table.x, table.y, table.width, table.height, table.seats);
+        seatPositions.forEach((position) => { const seatGradient = ctx.createRadialGradient(position.x, position.y, 0, position.x, position.y, seatRadius); const seatStroke = isHovered ? "rgba(56, 189, 174, 0.8)" : "rgba(255, 255, 255, 0.6)"; seatGradient.addColorStop(0, isHovered ? "rgba(56, 189, 174, 0.7)" : "rgba(255, 255, 255, 0.5)"); seatGradient.addColorStop(1, isHovered ? "rgba(56, 189, 174, 0.4)" : "rgba(200, 200, 200, 0.3)"); ctx.fillStyle = seatGradient; ctx.strokeStyle = seatStroke; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(position.x, position.y, seatRadius, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
 
-    // Add instructions
-    if (tables.length > 0) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.7)"
-      ctx.font = "12px var(--font-sans)"
-      ctx.textAlign = "center"
-      ctx.textBaseline = "bottom"
-      ctx.fillText("Click on a table to select it", canvas.width / 2, canvas.height - 10)
-    }
-  }, [tables, hoveredTable, canvasSize, isLoading, spotlights])
+        // Hover Pulse Animation
+        if (isHovered) { const pulseFrequency = 0.005; const pulseMagnitude = 3; const pulseSize = pulseMagnitude + Math.sin(time * pulseFrequency) * pulseMagnitude; ctx.strokeStyle = "rgba(56, 189, 174, 0.5)"; ctx.lineWidth = 1.5; ctx.beginPath(); if (table.type === "circle") { ctx.arc(centerX, centerY, table.width / 2 + pulseSize, 0, Math.PI * 2); } else { const pulseX = table.x - pulseSize / 2, pulseY = table.y - pulseSize / 2, pulseW = table.width + pulseSize, pulseH = table.height + pulseSize; const pulseRadius = cornerRadius + pulseSize / 2; ctx.moveTo(pulseX + pulseRadius, pulseY); ctx.lineTo(pulseX + pulseW - pulseRadius, pulseY); ctx.quadraticCurveTo(pulseX + pulseW, pulseY, pulseX + pulseW, pulseY + pulseRadius); ctx.lineTo(pulseX + pulseW, pulseY + pulseH - pulseRadius); ctx.quadraticCurveTo(pulseX + pulseW, pulseY + pulseH, pulseX + pulseW - pulseRadius, pulseY + pulseH); ctx.lineTo(pulseX + pulseRadius, pulseY + pulseH); ctx.quadraticCurveTo(pulseX, pulseY + pulseH, pulseX, pulseY + pulseH - pulseRadius); ctx.lineTo(pulseX, pulseY + pulseRadius); ctx.quadraticCurveTo(pulseX, pulseY, pulseX + pulseRadius, pulseY); ctx.closePath(); } ctx.stroke(); }
+        ctx.restore();
+      });
 
-  // Calculate seat positions for visual indicators
-  const calculateSeatPositions = (
-    tableType: string,
-    tableX: number,
-    tableY: number,
-    tableWidth: number,
-    tableHeight: number,
-    numSeats: number,
-  ) => {
-    const positions = []
+      animationFrameRef.current = requestAnimationFrame(drawFrame);
+    };
+    animationFrameRef.current = requestAnimationFrame(drawFrame);
+    return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); animationFrameRef.current = null; };
+  }, [tables, hoveredTable, canvasSize, isLoading, error, spotlights, calculateSeatPositions]);
 
-    if (tableType === "circle") {
-      const centerX = tableX + tableWidth / 2
-      const centerY = tableY + tableHeight / 2
-      const radius = tableWidth / 2
-
-      for (let i = 0; i < numSeats; i++) {
-        const angle = (i * 2 * Math.PI) / numSeats - Math.PI / 2 // Start from top
-        const x = centerX + radius * Math.cos(angle)
-        const y = centerY + radius * Math.sin(angle)
-        positions.push({ x, y })
-      }
-    } else if (tableType === "square" || tableType === "rectangle") {
-      // Distribute seats around the rectangle
-      const seatsPerSide = Math.ceil(numSeats / 4)
-      let seatCount = 0
-
-      // Top side
-      const topSeats = Math.min(seatsPerSide, numSeats - seatCount)
-      for (let i = 0; i < topSeats; i++) {
-        const x = tableX + ((i + 1) * tableWidth) / (topSeats + 1)
-        const y = tableY
-        positions.push({ x, y })
-        seatCount++
-      }
-
-      // Right side
-      const rightSeats = Math.min(seatsPerSide, numSeats - seatCount)
-      for (let i = 0; i < rightSeats; i++) {
-        const x = tableX + tableWidth
-        const y = tableY + ((i + 1) * tableHeight) / (rightSeats + 1)
-        positions.push({ x, y })
-        seatCount++
-      }
-
-      // Bottom side
-      const bottomSeats = Math.min(seatsPerSide, numSeats - seatCount)
-      for (let i = 0; i < bottomSeats; i++) {
-        const x = tableX + tableWidth - ((i + 1) * tableWidth) / (bottomSeats + 1)
-        const y = tableY + tableHeight
-        positions.push({ x, y })
-        seatCount++
-      }
-
-      // Left side
-      const leftSeats = Math.min(seatsPerSide, numSeats - seatCount)
-      for (let i = 0; i < leftSeats; i++) {
-        const x = tableX
-        const y = tableY + tableHeight - ((i + 1) * tableHeight) / (leftSeats + 1)
-        positions.push({ x, y })
-        seatCount++
-      }
-    }
-
-    return positions
-  }
-
-  // Handle canvas click
+  // Handle canvas click - Enhanced Hit Detection with rotation support
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    console.log("[FloorPlanView] Canvas clicked");
+    const canvas = canvasRef.current; if (!canvas || isLoading || error) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
 
-    const rect = canvas.getBoundingClientRect()
-
-    // Calculate the scale factor for responsive canvas
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
-    // Get the actual position on the canvas
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
-
-    // Check if clicked on a table with improved hit detection
-    for (const table of tables) {
-      if (table.type === "circle") {
-        const radius = table.width / 2
-        const centerX = table.x + radius
-        const centerY = table.y + radius
-        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
-
-        // Increase the hit area significantly (50% larger than radius)
-        if (distance <= radius * 1.5) {
-          // Add haptic feedback if available
-          if (navigator.vibrate) {
-            navigator.vibrate(50)
-          }
-
-          toast({
-            title: `Table ${table.label} selected`,
-            description: "Loading table view...",
-            duration: 2000,
-          })
-
-          onSelectTable(table)
-          return
+    let clickedTable: Table | null = null;
+    // Iterate reverse for Z-index
+    for (let i = tables.length - 1; i >= 0; i--) {
+        const table = tables[i];
+        
+        // Enhanced hit detection that better handles rotation
+        const centerX = table.x + table.width / 2;
+        const centerY = table.y + table.height / 2;
+        const rotationRad = (table.rotation || 0) * (Math.PI / 180);
+        
+        // Translate point relative to table center
+        const relX = x - centerX;
+        const relY = y - centerY;
+        
+        // Rotate point in opposite direction of table rotation
+        const rotatedX = relX * Math.cos(-rotationRad) - relY * Math.sin(-rotationRad);
+        const rotatedY = relX * Math.sin(-rotationRad) + relY * Math.cos(-rotationRad);
+        
+        // Add buffer for easier clicking
+        const buffer = 15; // Increased buffer for better usability
+        
+        if (table.type === "circle") {
+            // For circle, check if point is within radius
+            const distance = Math.sqrt(rotatedX * rotatedX + rotatedY * rotatedY);
+            if (distance <= (table.width / 2) + buffer) {
+                clickedTable = table;
+                break;
+            }
+        } else {
+            // For rectangles and squares, check if rotated point is within bounds
+            if (
+                rotatedX >= -table.width / 2 - buffer &&
+                rotatedX <= table.width / 2 + buffer &&
+                rotatedY >= -table.height / 2 - buffer &&
+                rotatedY <= table.height / 2 + buffer
+            ) {
+                clickedTable = table;
+                break;
+            }
         }
-      } else {
-        // Add a much larger buffer around rectangle/square tables (30px)
-        const buffer = 30
-        if (
-          x >= table.x - buffer &&
-          x <= table.x + table.width + buffer &&
-          y >= table.y - buffer &&
-          y <= table.y + table.height + buffer
-        ) {
-          // Add haptic feedback if available
-          if (navigator.vibrate) {
-            navigator.vibrate(50)
-          }
-
-          toast({
-            title: `Table ${table.label} selected`,
-            description: "Loading table view...",
-            duration: 2000,
-          })
-
-          onSelectTable(table)
-          return
-        }
-      }
     }
-  }
 
-  // Handle touch for mobile/tablet with improved accuracy
+    if (clickedTable) {
+      console.log("[FloorPlanView] Click detected on table:", clickedTable.label);
+      onSelectTable(clickedTable);
+    } else {
+      console.log("[FloorPlanView] Click detected on empty space.");
+    }
+  };
+
+  // Handle touch - Enhanced Hit Detection matching click detection
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault() // Prevent default behavior
+    e.preventDefault();
+    console.log("[FloorPlanView] Canvas touched");
+    const canvas = canvasRef.current; if (!canvas || isLoading || error) return;
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX, y = (touch.clientY - rect.top) * scaleY;
 
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const touch = e.touches[0]
-
-    // Calculate the scale factor for responsive canvas
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
-    // Get the actual position on the canvas
-    const x = (touch.clientX - rect.left) * scaleX
-    const y = (touch.clientY - rect.top) * scaleY
-
-    // Check if touched on a table with improved hit detection
-    for (const table of tables) {
-      if (table.type === "circle") {
-        const radius = table.width / 2
-        const centerX = table.x + radius
-        const centerY = table.y + radius
-        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
-
-        // Increase the hit area significantly for touch (60% larger than radius)
-        if (distance <= radius * 1.6) {
-          // Add haptic feedback if available
-          if (navigator.vibrate) {
-            navigator.vibrate(50)
-          }
-
-          toast({
-            title: `Table ${table.label} selected`,
-            description: "Loading table view...",
-            duration: 2000,
-          })
-
-          onSelectTable(table)
-          return
+    let touchedTable: Table | null = null;
+    // Iterate reverse for Z-index
+    for (let i = tables.length - 1; i >= 0; i--) {
+        const table = tables[i];
+        
+        // Enhanced hit detection that better handles rotation
+        const centerX = table.x + table.width / 2;
+        const centerY = table.y + table.height / 2;
+        const rotationRad = (table.rotation || 0) * (Math.PI / 180);
+        
+        // Translate point relative to table center
+        const relX = x - centerX;
+        const relY = y - centerY;
+        
+        // Rotate point in opposite direction of table rotation
+        const rotatedX = relX * Math.cos(-rotationRad) - relY * Math.sin(-rotationRad);
+        const rotatedY = relX * Math.sin(-rotationRad) + relY * Math.cos(-rotationRad);
+        
+        // Larger buffer for touch
+        const buffer = 25;
+        
+        if (table.type === "circle") {
+            // For circle, check if point is within radius
+            const distance = Math.sqrt(rotatedX * rotatedX + rotatedY * rotatedY);
+            if (distance <= (table.width / 2) + buffer) {
+                touchedTable = table;
+                break;
+            }
+        } else {
+            // For rectangles and squares, check if rotated point is within bounds
+            if (
+                rotatedX >= -table.width / 2 - buffer &&
+                rotatedX <= table.width / 2 + buffer &&
+                rotatedY >= -table.height / 2 - buffer &&
+                rotatedY <= table.height / 2 + buffer
+            ) {
+                touchedTable = table;
+                break;
+            }
         }
-      } else {
-        // Add a much larger buffer around rectangle/square tables for touch (40px)
-        const buffer = 40
-        if (
-          x >= table.x - buffer &&
-          x <= table.x + table.width + buffer &&
-          y >= table.y - buffer &&
-          y <= table.y + table.height + buffer
-        ) {
-          // Add haptic feedback if available
-          if (navigator.vibrate) {
-            navigator.vibrate(50)
-          }
-
-          toast({
-            title: `Table ${table.label} selected`,
-            description: "Loading table view...",
-            duration: 2000,
-          })
-
-          onSelectTable(table)
-          return
-        }
-      }
     }
-  }
 
-  // Handle mouse move for hover effect
+    if (touchedTable) {
+      console.log("[FloorPlanView] Touch detected on table:", touchedTable.label);
+      setHoveredTable(touchedTable.id); // Show hover effect
+      onSelectTable(touchedTable);
+    } else {
+      console.log("[FloorPlanView] Touch detected on empty space.");
+      setHoveredTable(null);
+    }
+  };
+
+  // Handle mouse move for hover effects with improved detection
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current; if (!canvas || isLoading || error) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
 
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
-
-    // Check if mouse is over a table
-    let hoveredTableId = null
-
-    for (const table of tables) {
-      if (table.type === "circle") {
-        const radius = table.width / 2
-        const centerX = table.x + radius
-        const centerY = table.y + radius
-        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
-
-        if (distance <= radius * 1.2) {
-          hoveredTableId = table.id
-          break
+    let hoveredTableId: string | null = null;
+    // Find hovered table (iterate reverse for Z-index) - Using enhanced detection
+    for (let i = tables.length - 1; i >= 0; i--) {
+        const table = tables[i];
+        
+        // Enhanced hit detection that handles rotation
+        const centerX = table.x + table.width / 2;
+        const centerY = table.y + table.height / 2;
+        const rotationRad = (table.rotation || 0) * (Math.PI / 180);
+        
+        // Translate point relative to table center
+        const relX = x - centerX;
+        const relY = y - centerY;
+        
+        // Rotate point in opposite direction of table rotation
+        const rotatedX = relX * Math.cos(-rotationRad) - relY * Math.sin(-rotationRad);
+        const rotatedY = relX * Math.sin(-rotationRad) + relY * Math.cos(-rotationRad);
+        
+        // Small buffer for hover
+        const buffer = 5;
+        
+        if (table.type === "circle") {
+            // For circle, check if point is within radius
+            const distance = Math.sqrt(rotatedX * rotatedX + rotatedY * rotatedY);
+            if (distance <= (table.width / 2) + buffer) {
+                hoveredTableId = table.id;
+                break;
+            }
+        } else {
+            // For rectangles and squares, check if rotated point is within bounds
+            if (
+                rotatedX >= -table.width / 2 - buffer &&
+                rotatedX <= table.width / 2 + buffer &&
+                rotatedY >= -table.height / 2 - buffer &&
+                rotatedY <= table.height / 2 + buffer
+            ) {
+                hoveredTableId = table.id;
+                break;
+            }
         }
-      } else {
-        const buffer = 15
-        if (
-          x >= table.x - buffer &&
-          x <= table.x + table.width + buffer &&
-          y >= table.y - buffer &&
-          y <= table.y + table.height + buffer
-        ) {
-          hoveredTableId = table.id
-          break
-        }
-      }
     }
+    // Only update state if hover actually changes to prevent unnecessary re-renders
+    if (hoveredTableId !== hoveredTable) {
+        setHoveredTable(hoveredTableId);
+    }
+  };
 
-    setHoveredTable(hoveredTableId)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-[450px] w-full rounded-lg" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 text-center border border-gray-700/30 rounded-lg bg-gray-800/40">
-        <Info className="h-10 w-10 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium mb-2 text-white">Error Loading Floor Plan</h3>
-        <p className="text-gray-400 mb-4">{error}</p>
-        <button onClick={() => window.location.reload()} className="text-teal-400 hover:underline">
-          Refresh Page
-        </button>
-      </div>
-    )
-  }
-
-  if (tables.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 text-center border border-gray-700/30 rounded-lg bg-gray-800/40">
-        <Info className="h-10 w-10 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium mb-2 text-white">No Tables Found</h3>
-        <p className="text-gray-400 mb-4">Please go to the Admin view to create tables first.</p>
-        <a href="/admin" className="text-teal-400 hover:underline">
-          Go to Admin
-        </a>
-      </div>
-    )
-  }
-
+  // --- JSX Rendering ---
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       <div
         ref={containerRef}
-        className="relative border border-gray-700/30 rounded-lg overflow-hidden transition-all duration-200"
+        className="relative w-full bg-gray-900/70 border border-gray-700/50 rounded-xl shadow-lg overflow-hidden aspect-[4/3]"
+        style={{ height: canvasSize.height }}
       >
-        {/* Ambient lighting effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 to-gray-950/50 pointer-events-none"></div>
+        {/* Loading State Skeleton */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+              className="absolute inset-0 flex items-center justify-center bg-gray-900/80 z-20 p-4"
+            >
+              <div className="w-full h-full grid grid-cols-3 grid-rows-2 gap-4 p-4">
+                <Skeleton className="w-full h-full rounded-lg bg-gray-700/50 animate-pulse" />
+                <Skeleton className="w-full h-full rounded-full bg-gray-700/50 col-start-3 animate-pulse" />
+                <Skeleton className="w-full h-full rounded-lg bg-gray-700/50 row-start-2 col-span-2 animate-pulse" />
+                <Skeleton className="w-full h-full rounded-full bg-gray-700/50 row-start-2 col-start-3 animate-pulse" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Spotlights */}
-        {spotlights.map((spot, i) => (
-          <div
-            key={i}
-            className={`absolute w-[300px] h-[300px] rounded-full pointer-events-none opacity-20 ${
-              spot.color === "teal"
-                ? "bg-[radial-gradient(circle_at_center,rgba(13,148,136,0.3),transparent_70%)]"
-                : "bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.3),transparent_70%)]"
-            }`}
-            style={{
-              left: `${(spot.x / canvasSize.width) * 100}%`,
-              top: `${(spot.y / canvasSize.height) * 100}%`,
-              transform: "translate(-50%, -50%)",
-            }}
-          ></div>
-        ))}
+        {/* Error State */}
+        <AnimatePresence>
+          {!isLoading && error && (
+            <motion.div
+              key="error" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+              className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/60 backdrop-blur-sm z-20 p-4 text-center"
+            >
+              <Info className="h-10 w-10 text-red-300 mb-3" />
+              <p className="text-lg font-medium text-red-200 mb-1">Error Loading Floor Plan</p>
+              <p className="text-sm text-red-300 mb-4">{error}</p>
+              <Button onClick={() => { setIsLoading(true); fetchTables(); }} variant="destructive" size="sm">Retry</Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
+        {/* Canvas for drawing */}
         <canvas
           ref={canvasRef}
           onClick={handleCanvasClick}
-          onTouchStart={handleTouchStart}
           onMouseMove={handleMouseMove}
-          className="w-full h-auto cursor-pointer"
+          onMouseLeave={() => setHoveredTable(null)}
+          onTouchStart={handleTouchStart}
+          className={`absolute inset-0 transition-opacity duration-300 ${isLoading || error ? 'opacity-0' : 'opacity-100'}`}
+          aria-label="Floor plan"
         />
 
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <div className="flex justify-center gap-2 flex-wrap">
-            <AnimatePresence>
-              {tables.map((table, index) => (
-                <motion.div
-                  key={table.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                >
-                  <Badge
-                    variant={hoveredTable === table.id ? "default" : "outline"}
-                    className={`cursor-pointer transition-all ${
-                      hoveredTable === table.id
-                        ? "bg-teal-600 hover:bg-teal-700 border-teal-500"
-                        : "hover:bg-teal-900/30 border-teal-700/50"
-                    }`}
-                    onClick={() => {
-                      onSelectTable(table)
-                      toast({
-                        title: `Table ${table.label} selected`,
-                        description: "Loading table view...",
-                        duration: 2000,
-                      })
-                    }}
-                  >
-                    {table.label}
-                  </Badge>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </motion.div>
+        {/* Instructions Overlay */}
+        {!isLoading && !error && tables.length > 0 && (
+           <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-400 bg-gray-900/60 px-2 py-1 rounded pointer-events-none">
+               Click on a table to select it
+           </div>
+        )}
       </div>
     </motion.div>
   )

@@ -26,6 +26,39 @@ speech_service = SpeechService()
 # Track active Deepgram services by connection ID
 active_deepgram_services = {}
 
+# Add a simple debug endpoint
+@router.websocket("/ws/debug")
+async def websocket_debug_endpoint(websocket: WebSocket):
+    """Simple debug endpoint to test WebSocket connection"""
+    await websocket.accept()
+    
+    try:
+        # Send welcome message
+        await websocket.send_json({"type": "connection", "status": "connected", "message": "Debug WebSocket connected"})
+        
+        while True:
+            # Echo received messages
+            data = await websocket.receive()
+            
+            if "text" in data:
+                # Process text message
+                try:
+                    # Try to parse as JSON
+                    message = json.loads(data["text"])
+                    message["echo"] = True
+                    await websocket.send_json(message)
+                except json.JSONDecodeError:
+                    # Send as plain text if not JSON
+                    await websocket.send_text(f"Echo: {data['text']}")
+            elif "bytes" in data:
+                # Process binary data
+                await websocket.send_bytes(data["bytes"])
+    
+    except WebSocketDisconnect:
+        logger.info("Debug WebSocket disconnected")
+    except Exception as e:
+        logger.error(f"Error in debug WebSocket: {e}")
+
 @router.websocket("/ws/listen")
 async def websocket_listen_endpoint(websocket: WebSocket):
     """
@@ -127,62 +160,23 @@ async def websocket_listen_endpoint(websocket: WebSocket):
                 audio_chunk = data["bytes"]
                 audio_size = len(audio_chunk)
 
-                # Connect to Deepgram on first audio chunk if not already connected
-                if not deepgram_service or not deepgram_service.is_connected:
-                    try:
-                        logger.info(f"First audio chunk received ({audio_size} bytes). Ensuring Deepgram connection for {connection_id}")
-                        await manager.send_personal_message(
-                            {"type": "dg_status", "status": "connecting"},
-                            websocket
-                        )
-                        if not deepgram_service: # Initialize if it doesn't exist
-                             logger.info(f"Initializing DeepgramService for {connection_id}")
-                             deepgram_service = DeepgramService(websocket_callback=deepgram_callback)
-                             active_deepgram_services[connection_id] = deepgram_service
+                # Initialize DeepgramService on first chunk
+                if not deepgram_service:
+                    logger.info(f"First audio chunk received ({audio_size} bytes). Initializing DeepgramService for {connection_id}")
+                    deepgram_service = DeepgramService(websocket_callback=deepgram_callback)
+                    active_deepgram_services[connection_id] = deepgram_service
+                    # Start Deepgram connection in background
+                    asyncio.create_task(deepgram_service.connect())
+                    # Notify client that connection is in progress
+                    await manager.send_personal_message({"type": "dg_status", "status": "connecting"}, websocket)
 
-                        # Explicitly await connection and check status
-                        await deepgram_service.connect() # This handles connection/reconnection attempts internally
-
-                        if not deepgram_service.is_connected:
-                             # Connection failed even after attempts within connect()
-                             logger.error(f"Failed to establish Deepgram connection for {connection_id} after connect() call.")
-                             await manager.send_personal_message(
-                                 {"type": "error", "message": "Could not connect to speech service."},
-                                 websocket
-                             )
-                             continue # Skip sending this chunk if connection failed
-                        else:
-                             logger.info(f"Deepgram connected successfully for {connection_id}")
-                             await manager.send_personal_message(
-                                 {"type": "dg_status", "status": "connected"},
-                                 websocket
-                             )
-
-                    except Exception as e:
-                        logger.error(f"Error ensuring Deepgram connection on first audio chunk: {e}")
-                        await manager.send_personal_message(
-                            {"type": "error", "message": f"Error connecting to speech service: {e}"},
-                            websocket
-                        )
-                        # Attempt to clean up if service was created but failed to connect fully
-                        if deepgram_service and not deepgram_service.is_connected:
-                            await cleanup_connection(connection_id, deepgram_service)
-                            deepgram_service = None # Ensure it's reset
-                        continue # Skip sending this chunk
-
-                # Send the audio chunk ONLY if we are sure we are connected
-                if deepgram_service and deepgram_service.is_connected:
-                    try:
-                        success = await deepgram_service.send_audio(audio_chunk)
-                        if not success:
-                            logger.warning(f"Failed to send audio chunk ({audio_size} bytes) to Deepgram for {connection_id}")
-                            # Let DeepgramService error handling manage potential disconnects
-                    except Exception as e:
-                        logger.error(f"Error sending audio chunk to Deepgram: {e}")
-                        # Let DeepgramService error handling manage potential disconnects
-                else:
-                     # This case should ideally not be reached if the connection logic above is sound
-                     logger.warning(f"Received audio ({audio_size} bytes) but Deepgram is not connected for {connection_id}. Skipping send.")
+                # Send audio chunk to Deepgram (will buffer until connected)
+                try:
+                    success = await deepgram_service.send_audio(audio_chunk)
+                    if not success:
+                        logger.warning(f"Failed to send audio chunk ({audio_size} bytes) for {connection_id}")
+                except Exception as e:
+                    logger.error(f"Error sending audio chunk to Deepgram for {connection_id}: {e}")
     
     except WebSocketDisconnect:
         # Client disconnected

@@ -1,108 +1,59 @@
-import { type NextRequest, NextResponse } from "next/server"
+// File: frontend/app/api/v1/speech/transcribe/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+// Ensure the API key is loaded securely from environment variables on the server
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+
+const OPENAI_MODEL = "whisper-1";
 
 export async function POST(request: NextRequest) {
-  try {
-    const formData = await request.formData()
-    const audioData = formData.get("audio_data") as string
-    const tableId = formData.get("table_id") as string
-    const seatNumber = formData.get("seat_number") as string
-
-    if (!audioData) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "No audio data provided",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Get the Deepgram API key from environment variables
-    const apiKey = process.env.DEEPGRAM_API_KEY
-
-    if (!apiKey) {
-      console.error("Deepgram API key not found")
-      // Fall back to mock response if no API key
-      return mockResponse(tableId, seatNumber)
+    if (!openai) {
+        console.error("OpenAI API key not configured on the server.");
+        return NextResponse.json({ error: "Server configuration error: Missing API Key." }, { status: 500 });
     }
 
     try {
-      // Convert base64 to binary
-      const binaryData = Buffer.from(audioData, "base64")
+        const formData = await request.formData();
+        const file = formData.get('file') as File | null;
 
-      // Send to Deepgram API
-      const response = await fetch(
-        "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=false&punctuate=true",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Token ${apiKey}`,
-            "Content-Type": "audio/webm",
-          },
-          body: binaryData,
-        },
-      )
+        if (!file) {
+            return NextResponse.json({ error: "No audio file provided." }, { status: 400 });
+        }
 
-      if (!response.ok) {
-        throw new Error(`Deepgram API error: ${response.status}`)
-      }
+        console.log(`[API Route] Received audio file: ${file.name}, size: ${file.size}, type: ${file.type}`);
 
-      const data = await response.json()
+        // Ensure the file is treated correctly by the OpenAI SDK
+        // The SDK expects a File object or similar structure
+        const transcription = await openai.audio.transcriptions.create({
+            file: file, // Pass the File object directly
+            model: OPENAI_MODEL,
+            // language: 'en', // Optional: Specify language
+            // response_format: "json", // Default is json
+        });
 
-      // Extract the transcription
-      const transcript = data.results?.channels[0]?.alternatives[0]?.transcript || ""
-      const confidence = data.results?.channels[0]?.alternatives[0]?.confidence || 0.85
+        console.log("[API Route] OpenAI Transcription Response:", transcription);
 
-      return NextResponse.json({
-        success: true,
-        text: transcript,
-        confidence: confidence,
-      })
-    } catch (error) {
-      console.error("Error calling Deepgram API:", error)
-      // Fall back to mock response if API call fails
-      return mockResponse(tableId, seatNumber)
+        // Return the transcription text
+        return NextResponse.json({ text: transcription.text });
+
+    } catch (error: any) {
+        console.error("[API Route] Error during transcription:", error);
+
+        let errorMessage = "Failed to transcribe audio.";
+        let statusCode = 500;
+
+        if (error.response) {
+            // Handle potential errors from OpenAI API
+            console.error("[API Route] OpenAI API Error Status:", error.response.status);
+            console.error("[API Route] OpenAI API Error Body:", error.response.data);
+            errorMessage = error.response.data?.error?.message || errorMessage;
+            statusCode = error.response.status;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        return NextResponse.json({ error: errorMessage }, { status: statusCode });
     }
-  } catch (error) {
-    console.error("Error processing request:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal server error",
-      },
-      { status: 500 },
-    )
-  }
-}
-
-// Mock response function for fallback
-function mockResponse(tableId: string, seatNumber: string) {
-  const foodResponses = [
-    "1 chicken soup, 1 garden salad with ranch dressing on the side",
-    "1 grilled salmon with steamed vegetables, no salt",
-    "1 vegetarian pasta with tomato sauce",
-    "1 ribeye steak medium rare with mashed potatoes",
-    "1 caesar salad with grilled chicken",
-  ]
-
-  const drinkResponses = [
-    "1 decaf coffee with cream",
-    "1 iced tea, no sugar",
-    "1 orange juice, no ice",
-    "1 sparkling water with lemon",
-    "1 hot chocolate with whipped cream",
-  ]
-
-  // Determine if this is likely a food or drink order based on table/seat
-  const isFood = Number.parseInt(seatNumber) % 2 === 0
-
-  const responses = isFood ? foodResponses : drinkResponses
-  const randomIndex = Math.floor(Math.random() * responses.length)
-
-  return NextResponse.json({
-    success: true,
-    text: responses[randomIndex],
-    confidence: 0.85,
-    isMock: true,
-  })
 }

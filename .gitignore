@@ -1,79 +1,47 @@
-# Python
+### Node.js
+node_modules/
+frontend/node_modules/
+npm-debug.log*
+
+### Next.js
+frontend/.next/
+
+### Python
+venv/
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
 *.egg-info/
-.installed.cfg
-*.egg
 
-# Virtual Environment
-venv/
-ENV/
-env/
+### Environment files
+*.env
+*.env.local
+backend/.env
+frontend/.env
+frontend/.env.local
+backend/.env.local
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Logs
+### Logs and databases
 *.log
-logs/
-log/
-
-# Database
-*.sqlite3
+backend_logs.txt
 *.db
+npm-debug.log*
 
-# Environment variables
-.env
-.env.local
-
-# OS specific
+### OS and IDE files
+*.DS_Store
 .DS_Store
-Thumbs.db
+.vscode/
+.idea/
 
-# Node modules (if using any frontend build tools)
-node_modules/
+### PIDs and temp
+*.pid
+.backend_pid
+.frontend_pid
 
-# Compiled CSS
-app/static/css/tailwind.css
-
-# Temporary files
-*.tmp
-*.bak
-*.swp
-*~
-
-# Checkpoints
-checkpoints/
-
-# Nohup output
-nohup.out
-
-# Docker
-.docker/
-docker-compose.override.yml
-
-# Test coverage
+### Coverage
 .coverage
-htmlcov/
-coverage.xml
+coverage/
 
-# Pre-commit
-.pre-commit-config.yaml.bak
+### Misc
+dist/
+build/
+tmp/

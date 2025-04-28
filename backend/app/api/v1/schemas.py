@@ -1,4 +1,5 @@
 from typing import List, Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
@@ -80,9 +81,29 @@ class TableUpdate(BaseModel):
     zone: Optional[str] = None
     status: Optional[TableStatusEnum] = None
 
+class TableBulk(BaseModel):
+    """
+    Bulk table payload for creating/updating tables within a floor plan.
+    If 'id' is provided, the table will be updated; otherwise, created.
+    """
+    id: Optional[str] = None
+    name: str
+    shape: TableShapeEnum
+    width: float
+    height: float
+    position_x: float
+    position_y: float
+    rotation: float = 0
+    seat_count: int = 4
+    zone: Optional[str] = None
+    status: TableStatusEnum = TableStatusEnum.AVAILABLE
+
+    class Config:
+        orm_mode = True
+
 class TableInDB(TableBase):
-    id: int # Corrected to int
-    floor_plan_id: str # Foreign key remains str
+    id: str  # Table ID as string (UUID)
+    floor_plan_id: str  # Foreign key to floor_plans, string (UUID)
 
     class Config:
         orm_mode = True # Use from_attributes in Pydantic v2
@@ -99,7 +120,7 @@ class SeatBase(BaseModel):
     resident_id: Optional[str] = None # Foreign key remains str
 
 class SeatCreate(SeatBase):
-    table_id: int # Corrected foreign key to int
+    table_id: str  # Foreign key to tables, string (UUID)
 
 class SeatUpdate(BaseModel):
     number: Optional[int] = None
@@ -109,8 +130,8 @@ class SeatUpdate(BaseModel):
     resident_id: Optional[str] = None # Foreign key remains str
 
 class SeatInDB(SeatBase):
-    id: int # Corrected to int
-    table_id: int # Corrected foreign key to int
+    id: str  # Seat ID as string (UUID)
+    table_id: str  # Foreign key to tables, string (UUID)
 
     class Config:
         orm_mode = True # Use from_attributes in Pydantic v2

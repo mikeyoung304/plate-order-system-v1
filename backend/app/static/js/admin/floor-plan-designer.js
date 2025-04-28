@@ -769,30 +769,121 @@ class FloorPlanDesigner {
    * Save floor plan to API
    * @param {Object} floorPlan - The floor plan object
    */
-  saveFloorPlanToAPI(floorPlan) {
-    // For now, save to localStorage as a placeholder
-    // In a real implementation, this would be an API call
-    const floorPlans = JSON.parse(localStorage.getItem('floorPlans') || '[]');
-    
-    // Check if floor plan already exists
-    const existingIndex = floorPlans.findIndex(fp => fp.id === floorPlan.id);
-    
-    if (existingIndex >= 0) {
-      // Update existing floor plan
-      floorPlans[existingIndex] = floorPlan;
-    } else {
-      // Add new floor plan
-      floorPlans.push(floorPlan);
+  async saveFloorPlanToAPI(floorPlan) {
+    try {
+      // Prepare the floor plan data for API
+      const floorPlanData = {
+        id: floorPlan.id,
+        name: floorPlan.name,
+        description: floorPlan.description,
+        data: JSON.stringify(floorPlan.data),
+        is_active: true
+      };
+      
+      // Determine if we're creating or updating
+      const method = this.currentFloorPlanId ? 'PUT' : 'POST';
+      const url = this.currentFloorPlanId
+        ? `/api/v1/floor-plans/${this.currentFloorPlanId}`
+        : '/api/v1/floor-plans';
+      
+      // Make the API call
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(floorPlanData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save floor plan: ${response.statusText}`);
+      }
+      
+      const savedFloorPlan = await response.json();
+      console.log('Floor plan saved:', savedFloorPlan);
+      
+      // Extract tables from the canvas and save them
+      await this.saveTablesForFloorPlan(savedFloorPlan.id);
+      
+      // Update current floor plan ID
+      this.currentFloorPlanId = savedFloorPlan.id;
+      
+      // Show success message
+      alert(`Floor plan "${floorPlan.name}" saved successfully`);
+      
+      // Also save to localStorage as a backup
+      const floorPlans = JSON.parse(localStorage.getItem('floorPlans') || '[]');
+      const existingIndex = floorPlans.findIndex(fp => fp.id === floorPlan.id);
+      
+      if (existingIndex >= 0) {
+        floorPlans[existingIndex] = floorPlan;
+      } else {
+        floorPlans.push(floorPlan);
+      }
+      
+      localStorage.setItem('floorPlans', JSON.stringify(floorPlans));
+      
+    } catch (error) {
+      console.error('Error saving floor plan:', error);
+      alert(`Error saving floor plan: ${error.message}`);
     }
-    
-    // Save to localStorage
-    localStorage.setItem('floorPlans', JSON.stringify(floorPlans));
-    
-    // Update current floor plan ID
-    this.currentFloorPlanId = floorPlan.id;
-    
-    // Show success message
-    alert(`Floor plan "${floorPlan.name}" saved successfully`);
+  }
+  
+  /**
+   * Save tables from the canvas to the API
+   * @param {string} floorPlanId - The ID of the floor plan
+   */
+  async saveTablesForFloorPlan(floorPlanId) {
+    try {
+      // Collect tables from canvas
+      const tables = [];
+      this.canvas.forEachObject(obj => {
+        if (obj.data && obj.data.type === 'table') {
+          // Create table data object
+          const tableData = {
+            id: obj.data.id,
+            floor_plan_id: floorPlanId,
+            name: obj.data.name,
+            shape: obj.data.shape,
+            width: obj.width * obj.scaleX,
+            height: obj.height * obj.scaleY,
+            position_x: obj.left,
+            position_y: obj.top,
+            rotation: obj.angle,
+            seat_count: obj.data.seats,
+            zone: obj.data.zone,
+            status: obj.data.status
+          };
+          
+          // Handle circle tables differently
+          if (obj.type === 'circle') {
+            tableData.width = obj.radius * 2 * obj.scaleX;
+            tableData.height = obj.radius * 2 * obj.scaleY;
+          }
+          
+          tables.push(tableData);
+        }
+      });
+      
+      // Make API call to save tables
+      const response = await fetch(`/api/v1/floor-plans/${floorPlanId}/tables`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(tables)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save tables: ${response.statusText}`);
+      }
+      
+      console.log('Tables saved successfully');
+      
+    } catch (error) {
+      console.error('Error saving tables:', error);
+      throw error;
+    }
   }
 
   /**
@@ -807,83 +898,268 @@ class FloorPlanDesigner {
   /**
    * Load the list of floor plans
    */
-  loadFloorPlanList() {
+  async loadFloorPlanList() {
+    console.log('Loading floor plan list from API');
     const listContainer = document.getElementById('floor-plan-list');
     
-    // Clear previous content
-    listContainer.innerHTML = '';
+    // Clear previous content and show loading indicator
+    listContainer.innerHTML = '<div class="text-center py-2"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
     
-    // Get floor plans from localStorage
-    const floorPlans = JSON.parse(localStorage.getItem('floorPlans') || '[]');
-    
-    if (floorPlans.length === 0) {
-      listContainer.innerHTML = '<div class="text-center py-4 text-muted"><p>No floor plans found</p></div>';
-      return;
-    }
-    
-    // Sort by updated date (newest first)
-    floorPlans.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    
-    // Create list items
-    floorPlans.forEach(floorPlan => {
-      const item = document.createElement('a');
-      item.href = '#';
-      item.className = 'list-group-item list-group-item-action floor-plan-item';
-      if (floorPlan.id === this.currentFloorPlanId) {
-        item.classList.add('active');
+    try {
+      // Fetch floor plans from API
+      const response = await fetch('/api/v1/floor-plans');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load floor plans: ${response.statusText}`);
       }
       
-      const date = new Date(floorPlan.updatedAt).toLocaleString();
+      const floorPlans = await response.json();
+      console.log('Loaded floor plans from API:', floorPlans);
       
-      item.innerHTML = `
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">${floorPlan.name}</h5>
-          <small>${date}</small>
-        </div>
-        <p class="mb-1">${floorPlan.description || 'No description'}</p>
-      `;
+      // Clear loading indicator
+      listContainer.innerHTML = '';
       
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.loadFloorPlan(floorPlan.id);
-        
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('load-floor-plan-modal'));
-        modal.hide();
+      if (!floorPlans || floorPlans.length === 0) {
+        listContainer.innerHTML = '<div class="text-center py-4 text-muted"><p>No floor plans found</p></div>';
+        return;
+      }
+      
+      // Sort by updated date (newest first)
+      floorPlans.sort((a, b) => {
+        const dateA = a.updated_at || a.updatedAt || a.created_at || a.createdAt || new Date().toISOString();
+        const dateB = b.updated_at || b.updatedAt || b.created_at || b.createdAt || new Date().toISOString();
+        return new Date(dateB) - new Date(dateA);
       });
       
-      listContainer.appendChild(item);
-    });
+      // Create list items
+      floorPlans.forEach(floorPlan => {
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'list-group-item list-group-item-action floor-plan-item';
+        if (floorPlan.id === this.currentFloorPlanId) {
+          item.classList.add('active');
+        }
+        
+        const date = new Date(floorPlan.updated_at || floorPlan.updatedAt || floorPlan.created_at || floorPlan.createdAt).toLocaleString();
+        
+        item.innerHTML = `
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">${floorPlan.name}</h5>
+            <small>${date}</small>
+          </div>
+          <p class="mb-1">${floorPlan.description || 'No description'}</p>
+        `;
+        
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('Floor plan clicked:', floorPlan.id);
+          this.loadFloorPlan(floorPlan.id);
+          
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('load-floor-plan-modal'));
+          modal.hide();
+        });
+        
+        listContainer.appendChild(item);
+      });
+      
+    } catch (error) {
+      console.error('Error loading floor plans:', error);
+      listContainer.innerHTML = `<div class="text-center py-4 text-danger"><p>Error loading floor plans: ${error.message}</p></div>`;
+      
+      // Add retry button
+      const retryButton = document.createElement('button');
+      retryButton.className = 'btn btn-primary mt-3';
+      retryButton.textContent = 'Retry';
+      retryButton.addEventListener('click', () => this.loadFloorPlanList());
+      listContainer.appendChild(retryButton);
+    }
   }
 
   /**
    * Load a floor plan by ID
    * @param {string} id - The ID of the floor plan to load
    */
-  loadFloorPlan(id) {
-    // Get floor plans from localStorage
-    const floorPlans = JSON.parse(localStorage.getItem('floorPlans') || '[]');
-    const floorPlan = floorPlans.find(fp => fp.id === id);
-    
-    if (!floorPlan) {
-      alert('Floor plan not found');
-      return;
-    }
-    
-    // Clear canvas
-    this.canvas.clear();
-    
-    // Load floor plan data
-    this.canvas.loadFromJSON(floorPlan.data, () => {
+  async loadFloorPlan(id) {
+    try {
+      console.log('Loading floor plan with ID:', id);
+      
+      // Show loading indicator
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.className = 'loading-indicator';
+      loadingIndicator.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading floor plan...</p>';
+      loadingIndicator.style.position = 'fixed';
+      loadingIndicator.style.top = '50%';
+      loadingIndicator.style.left = '50%';
+      loadingIndicator.style.transform = 'translate(-50%, -50%)';
+      loadingIndicator.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+      loadingIndicator.style.padding = '20px';
+      loadingIndicator.style.borderRadius = '10px';
+      loadingIndicator.style.textAlign = 'center';
+      loadingIndicator.style.zIndex = '1000';
+      document.body.appendChild(loadingIndicator);
+      
+      // First try to fetch floor plan from API
+      const response = await fetch(`/api/v1/floor-plans/${id}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load floor plan: ${response.statusText}`);
+      }
+      
+      const floorPlan = await response.json();
+      console.log('Loaded floor plan from API:', floorPlan);
+      
+      // Fetch tables for this floor plan
+      const tablesResponse = await fetch(`/api/v1/floor-plans/${id}/tables`);
+      
+      if (!tablesResponse.ok) {
+        throw new Error(`Failed to load tables: ${tablesResponse.statusText}`);
+      }
+      
+      const tables = await tablesResponse.json();
+      console.log('Loaded tables from API:', tables);
+      
+      // Clear canvas
+      this.canvas.clear();
+      
+      // If floor plan has data, try to load it
+      let dataLoaded = false;
+      if (floorPlan.data) {
+        try {
+          let floorPlanData;
+          if (typeof floorPlan.data === 'string') {
+            floorPlanData = JSON.parse(floorPlan.data);
+          } else {
+            floorPlanData = floorPlan.data;
+          }
+          
+          // Check if the data is a valid canvas JSON
+          if (floorPlanData.objects && Array.isArray(floorPlanData.objects)) {
+            this.canvas.loadFromJSON(floorPlanData, () => {
+              this.canvas.renderAll();
+              console.log('Loaded canvas from floor plan data');
+            });
+            dataLoaded = true;
+          } else {
+            console.warn('Floor plan data does not contain valid canvas objects');
+          }
+        } catch (parseError) {
+          console.error('Error parsing floor plan data:', parseError);
+        }
+      }
+      
+      // If we couldn't load from canvas data, create from tables
+      if (!dataLoaded) {
+        console.log('Creating canvas from tables data');
+        this.createCanvasFromTables(tables);
+      }
+      
       // Update current floor plan ID
       this.currentFloorPlanId = id;
       
-      // Refresh canvas
-      this.canvas.renderAll();
+      // Remove loading indicator
+      document.body.removeChild(loadingIndicator);
       
       // Show success message
       alert(`Floor plan "${floorPlan.name}" loaded successfully`);
+      
+    } catch (error) {
+      console.error('Error loading floor plan:', error);
+      alert(`Error loading floor plan: ${error.message}`);
+      
+      // Remove loading indicator if it exists
+      const loadingIndicator = document.querySelector('.loading-indicator');
+      if (loadingIndicator) {
+        document.body.removeChild(loadingIndicator);
+      }
+    }
+  }
+  
+  /**
+   * Create canvas objects from tables data
+   * @param {Array} tables - The tables data from the API
+   */
+  createCanvasFromTables(tables) {
+    // Clear canvas first
+    this.canvas.clear();
+    
+    // Create table objects
+    tables.forEach(table => {
+      let tableObj;
+      const defaultProps = {
+        left: table.position_x,
+        top: table.position_y,
+        fill: '#ffffff',
+        stroke: this.getStatusColor(table.status),
+        strokeWidth: 2,
+        hasControls: true,
+        hasBorders: true,
+        lockScalingFlip: true,
+        cornerColor: '#007bff',
+        cornerSize: 8,
+        transparentCorners: false,
+        angle: table.rotation || 0,
+        data: {
+          type: 'table',
+          id: table.id,
+          shape: table.shape,
+          name: table.name,
+          seats: table.seat_count || 4,
+          zone: table.zone || 'main',
+          status: table.status || 'available',
+          seatObjects: []
+        }
+      };
+      
+      // Create table based on shape
+      switch (table.shape) {
+        case 'circle':
+          tableObj = new fabric.Circle({
+            ...defaultProps,
+            radius: table.width / 2
+          });
+          break;
+          
+        case 'rectangle':
+        case 'square':
+          tableObj = new fabric.Rect({
+            ...defaultProps,
+            width: table.width,
+            height: table.height
+          });
+          break;
+          
+        default:
+          console.error('Invalid table shape:', table.shape);
+          return;
+      }
+      
+      // Add table label
+      const label = new fabric.Text(table.name, {
+        fontSize: 16,
+        fill: '#212529',
+        fontFamily: 'Arial',
+        originX: 'center',
+        originY: 'center',
+        left: table.position_x,
+        top: table.position_y,
+        selectable: false,
+        data: {
+          type: 'label',
+          tableId: table.id
+        }
+      });
+      
+      // Add to canvas
+      this.canvas.add(tableObj);
+      this.canvas.add(label);
+      
+      // Create seats
+      this.createSeatsForTable(tableObj);
     });
+    
+    // Render
+    this.canvas.renderAll();
   }
 
   /**

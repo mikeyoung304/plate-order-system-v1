@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from app.db.session import engine, Base
+from sqlalchemy.sql import text as sql_text
 
 # Load environment variables
 load_dotenv()
@@ -94,7 +95,14 @@ def init_database():
         print(f"❌ Error initializing database: {e}")
 
 def init_db():
+    # Create tables via SQLAlchemy
     Base.metadata.create_all(bind=engine)
+    
+    # Perform a quick health check with proper use of text()
+    with engine.connect() as connection:
+        # Using the text() function to wrap raw SQL for SQLAlchemy 2.0 compatibility
+        result = connection.execute(text("SELECT 1"))
+        print(f"Database connection test successful: {result.scalar()}")
 
 if __name__ == "__main__":
-    init_db() 
+    init_db()
