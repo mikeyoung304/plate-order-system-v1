@@ -1,6 +1,46 @@
 # Plate Order System
 
-A restaurant management system with Next.js frontend, FastAPI backend, and database (SQLite/PostgreSQL) integration.
+A specialized restaurant management system for assisted living facilities, featuring voice ordering, resident preference tracking, and real-time order updates.
+
+## Project Overview
+
+The Plate Order System is designed specifically for assisted living facility dining services, helping staff provide personalized service to residents while streamlining operations. The system focuses on:
+
+- **Resident Recognition**: Automatically recommends residents based on their typical seating patterns
+- **Preference Tracking**: Suggests food and drink orders based on resident history
+- **Voice-Enabled Ordering**: Allows servers to input orders by speaking
+- **Real-Time Updates**: Instantly displays orders in kitchen, expo, and bar stations
+- **Dietary Restrictions**: Tracks and alerts staff about resident dietary requirements
+
+## Quick Start Guide
+
+### Prerequisites
+
+- Node.js 18+ and npm/pnpm
+- Python 3.9+
+- PostgreSQL (optional, SQLite works for development)
+- Supabase account (free tier works for development)
+
+### Installation
+
+1. Clone the repository and set up environment variables:
+   ```bash
+   git clone <repository-url>
+   cd plate-order-system
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+2. Start the development environment:
+   ```bash
+   ./start_dev.sh
+   ```
+
+3. Access the application:
+   - **Main App**: http://localhost:3000
+   - **API Documentation**: http://localhost:8000/api/v1/docs
+
+For detailed setup instructions, see [DEVELOPER.md](DEVELOPER.md).
 
 ## System Architecture
 
@@ -18,163 +58,89 @@ This application consists of three main components:
 
 3. **Database**: Supports both:
    - SQLite (for development)
-   - PostgreSQL (for production)
+   - PostgreSQL/Supabase (for production)
 
-## Setup Guide
+## Tech Stack
 
-Follow these steps to get the system running:
+### Frontend
+- **Framework**: Next.js (React)
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API with standards based on clean code principles
+- **API Client**: Fetch API, Supabase Client
 
-### 1. Environment Setup
+### Backend
+- **Framework**: FastAPI (Python)
+- **Database ORM**: SQLAlchemy
+- **Authentication**: Supabase Auth
+- **Speech-to-Text**: Deepgram / OpenAI APIs
 
-The application is configured through environment variables.
+### Infrastructure
+- **Database**: Supabase (PostgreSQL)
+- **Real-time Updates**: WebSockets, Supabase Realtime
+- **Deployment**: Docker, Render
 
-1. Copy the example env file and customize for backend:
+## Directory Structure
 
-   cp .env.example .env
-
-2. Copy the example env file and customize for frontend:
-
-   cp frontend/.env.local.example frontend/.env.local
-
-3. Configure `DATABASE_URL` in `.env`:
-
-   # SQLite (default)
-   DATABASE_URL=sqlite:///./app.db
-
-   # Or PostgreSQL:
-   # DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-
-```bash
-# SQLite configuration (default)
-DATABASE_URL=sqlite:///./app.db
-
-# PostgreSQL configuration (if available)
-# DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 ```
-
-### 2. Backend Setup
-
-The backend requires Python with necessary dependencies.
-
-```bash
-# Navigate to the backend directory
-cd backend
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Initialize the database (creates tables based on models)
-python init_db_standalone.py
+plate-order-system/
+├── backend/               # Python FastAPI backend
+│   ├── app/               # Main application code
+│   │   ├── api/           # API endpoints and schemas
+│   │   ├── core/          # Core configuration and utilities
+│   │   ├── db/            # Database models and repositories
+│   │   ├── domain/        # Business logic and services
+│   │   ├── static/        # Static assets (CSS, JS)
+│   │   ├── templates/     # HTML templates
+│   │   └── websockets/    # WebSocket handlers
+│   └── alembic/           # Database migration tools
+├── frontend/              # Next.js frontend
+│   ├── app/               # Next.js app directory
+│   ├── components/        # React components
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utility functions
+│   ├── public/            # Static assets
+│   └── services/          # Service integrations
+├── docs/                  # Documentation files
+├── scripts/               # Utility scripts
+├── supabase/              # Supabase migrations
+└── tests/                 # Test files
 ```
-
-### 3. Frontend Setup
-
-The frontend uses Node.js and npm/pnpm.
-
-```bash
-# Navigate to the frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-
-# Configure API URL (.env.local file)
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
-```
-
-## Running the Application
-
-For convenience, use the provided scripts to start and stop the development environment:
-
-```bash
-# Start both frontend and backend
-./start_dev.sh
-
-# Stop all services
-./stop_dev.sh
-```
-
-### Manual Startup
-
-If you prefer to start components individually:
-
-1. **Backend**:
-   ```bash
-   cd backend
-   python main.py
-   ```
-   The API will be available at http://localhost:8000 with documentation at http://localhost:8000/api/v1/docs
-
-2. **Frontend**:
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   The application will be available at http://localhost:3000
-
-   - **Server View**: http://localhost:3000/server
-   - **Kitchen View**: http://localhost:3000/kitchen
-   - **Admin Dashboard**: http://localhost:3000/admin
 
 ## Key Features
 
 ### Floor Plan Management
-
 - Create, edit, and manage restaurant floor plans
 - Customize tables with different shapes, sizes, and seat counts
-- API endpoint: `/api/v1/floor-plans/{id}/tables` provides table data
+
+### Resident Recognition
+- Track resident seating patterns
+- Automatically suggest residents when a seat is selected
 
 ### Order Management
-
 - Take orders via voice or traditional input
+- Recommend items based on resident preferences
 - Track order status through different stations
 - Real-time updates via WebSockets
 
 ### User Interfaces
-
 - **Server View**: For taking orders and managing tables
 - **Kitchen View**: For food preparation tracking
 - **Bar View**: For beverage order management
 - **Expo View**: For order coordination and delivery
+- **Admin**: For system configuration and floor plan management
+
+## Documentation
+
+- [Developer Guide](DEVELOPER.md): Comprehensive setup and development instructions
+- [Contributing Guide](CONTRIBUTING.md): How to contribute to the project
+- [Security Policy](SECURITY.md): Security guidelines and practices
+- [Supabase Setup Guide](docs/supabase_setup_guide.md): Database setup instructions
+- [Secure Credentials Guide](SECURE-CREDENTIALS-GUIDE.md): How to manage API keys and credentials
 
 ## Troubleshooting
 
-### Common Issues
+Common issues and their solutions are documented in the [Developer Guide](DEVELOPER.md#troubleshooting).
 
-1. **Database Connection Errors**:
-   - Check DATABASE_URL in backend/.env
-   - Ensure PostgreSQL is running (if using PostgreSQL)
-   - SQLite fallback is enabled by default in start_dev.sh
+## License
 
-2. **API Not Responding**:
-   - Verify backend is running at the correct port
-   - Check backend logs for errors
-   - Try accessing Swagger docs at /api/v1/docs
-
-3. **Frontend Can't Connect to API**:
-   - Ensure NEXT_PUBLIC_API_URL is set correctly
-   - Verify that the frontend proxy in next.config.mjs is correctly configured
-   - Check browser console for CORS or network errors
-
-4. **Floor Plan Editor Not Loading Tables**:
-   - Check the API response from `/api/v1/floor-plans/{id}/tables`
-   - Verify database tables are properly created
-   - Ensure floor plan with the given ID exists
-
-## Development
-
-The codebase follows a structured approach:
-
-- Backend uses repository pattern for database access
-- Frontend components are organized for reusability
-- API endpoints follow RESTful conventions
-
-When making changes:
-
-1. Ensure database migrations are applied
-2. Restart both frontend and backend
-3. Check for any errors in the console
-
-## API Documentation
-
-The API documentation is available at `/api/v1/docs` when the backend is running, providing interactive documentation for all available endpoints.
+This project is licensed under the MIT License - see the LICENSE file for details.

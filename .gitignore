@@ -1,47 +1,102 @@
-### Node.js
-node_modules/
-frontend/node_modules/
-npm-debug.log*
-
-### Next.js
-frontend/.next/
-
-### Python
-venv/
+### Python ###
 __pycache__/
 *.py[cod]
-*.egg-info/
-
-### Environment files
-*.env
-*.env.local
-backend/.env
-frontend/.env
-frontend/.env.local
-backend/.env.local
-
-### Logs and databases
-*.log
-backend_logs.txt
-*.db
-npm-debug.log*
-
-### OS and IDE files
-*.DS_Store
-.DS_Store
-.vscode/
-.idea/
-
-### PIDs and temp
-*.pid
-.backend_pid
-.frontend_pid
-
-### Coverage
+*$py.class
+*~
+.pytest_cache/
 .coverage
-coverage/
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
+dmypy.json
+instance/
+.webassets-cache
 
-### Misc
+### Virtual Environments ###
+env/
+venv/
+ENV/
+.env
+.venv/
+pipenv/
+
+### SQLite ###
+*.db
+*.sqlite3
+*.sqlite
+
+### Logs ###
+*.log
+logs/
+log/
+
+### Node.js ###
+node_modules/
+.next/
 dist/
 build/
+coverage/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+### System and Editor Files ###
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+
+### Environment and Secret Files ###
+.env
+.env.secure
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+# Keep example environments
+!.env.example
+
+### Build artifacts ###
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+*.out
+*.app
+.Python
+public/build/
+static/build/
+.parcel-cache/
+
+### Temporary files ###
 tmp/
+temp/
+.cache/
+.tmp/
+
+### Package managers ###
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Ignore data and temp directories
+data/

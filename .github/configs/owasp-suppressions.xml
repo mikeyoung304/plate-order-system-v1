@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <!-- Example suppression - replace with actual suppressions as needed -->
+   <!--
+   <suppress>
+      <notes>
+         CVE-2022-12345 is mitigated in our implementation because we do not use the vulnerable component.
+      </notes>
+      <cve>CVE-2022-12345</cve>
+   </suppress>
+   -->
+   
+   <!-- Suppress known false positives -->
+   <suppress>
+      <notes>
+         This is a template suppression file. When dependency checks flag actual vulnerabilities that have been reviewed 
+         and determined to be false positives, they should be documented and suppressed here.
+      </notes>
+      <filePath regex="true">.*package-lock.json</filePath>
+      <cpe regex="true">cpe:/a:jquery:jquery:.*</cpe>
+   </suppress>
+</suppressions>

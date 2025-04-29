@@ -23,10 +23,9 @@ echo "--- Checking Codex CLI version ---" | tee -a "${LOGFILE}"
 codex --version 2>&1 | tee -a "${LOGFILE}"
 
 echo "" | tee -a "${LOGFILE}"
-echo "--- Running Codex CLI non-interactively in verbose/debug mode ---" | tee -a "${LOGFILE}"
-# Enable debug logs and run a single prompt so the session exits automatically
-export DEBUG=codex:*
-codex --verbose -q "explain this codebase to me" 2>&1 | tee -a "${LOGFILE}"
+    echo "--- Running Codex CLI non-interactively ---" | tee -a "${LOGFILE}"
+    # Run a single prompt so the session exits automatically
+    codex -q "explain this codebase to me" 2>&1 | tee -a "${LOGFILE}"
 
 echo "" | tee -a "${LOGFILE}"
 echo "--- Searching for CORSMiddleware usage ---" | tee -a "${LOGFILE}"

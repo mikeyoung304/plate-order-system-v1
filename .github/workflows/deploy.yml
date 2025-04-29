@@ -1,0 +1,74 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Frontend build
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install frontend dependencies
+        run: npm ci
+        
+      - name: Build frontend
+        run: npm run build
+        
+      # Backend prep
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          
+      - name: Run quick tests
+        run: pytest tests/ -xvs
+        
+  deploy-to-render:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+          
+      - name: Wait for Render Deployment
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 60
+          
+      - name: Verify deployment
+        run: |
+          bash scripts/verify_deployment.sh
+          
+  notify-deployment:
+    needs: deploy-to-render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: deployments
+          SLACK_TITLE: New Deployment
+          SLACK_MESSAGE: 'Plate Order System has been deployed to production!'
+          SLACK_COLOR: good

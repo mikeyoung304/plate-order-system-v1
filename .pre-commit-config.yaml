@@ -10,6 +10,14 @@ repos:
     -   id: check-json
     -   id: check-merge-conflict
     -   id: detect-private-key
+    -   id: check-shebang-scripts-are-executable
+    -   id: check-executables-have-shebangs
+    -   id: check-case-conflict
+    -   id: check-docstring-first
+    -   id: debug-statements
+    -   id: check-toml
+    -   id: no-commit-to-branch
+        args: ['--branch', 'main', '--branch', 'master']
 
 -   repo: https://github.com/psf/black
     rev: 23.3.0
@@ -27,7 +35,7 @@ repos:
     rev: 6.0.0
     hooks:
     -   id: flake8
-        additional_dependencies: [flake8-docstrings]
+        additional_dependencies: [flake8-docstrings, flake8-bandit, flake8-bugbear]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.3.0
@@ -39,4 +47,36 @@ repos:
     rev: v4.1.0
     hooks:
     -   id: pytest-cov
-        additional_dependencies: [pytest-asyncio] 
+        additional_dependencies: [pytest-asyncio]
+
+-   repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+    -   id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+-   repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.1
+    hooks:
+    -   id: python-safety-dependencies-check
+
+-   repo: https://github.com/thibaudcolas/pre-commit-stylelint
+    rev: v14.4.0
+    hooks:
+    -   id: stylelint
+        args: [--fix]
+        additional_dependencies:
+            - stylelint@14.4.0
+            - stylelint-config-standard@24.0.0
+
+-   repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.42.0
+    hooks:
+    -   id: eslint
+        files: \.(js|ts|jsx|tsx)$
+        types: [file]
+        additional_dependencies:
+        -   eslint@8.42.0
+        -   eslint-config-prettier@8.8.0
+        -   '@typescript-eslint/eslint-plugin@5.59.9'
+        -   '@typescript-eslint/parser@5.59.9'
