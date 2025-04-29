@@ -99,4 +99,4 @@ temp/
 !.yarn/versions
 
 # Ignore data and temp directories
-data/
+data/backend/.env
