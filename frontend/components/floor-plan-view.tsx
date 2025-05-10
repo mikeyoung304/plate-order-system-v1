@@ -14,6 +14,7 @@ import {
   mapBackendTableToFrontend,
 } from "@/lib/floor-plan-utils"
 import { Button } from "@/components/ui/button"
+import { mockAPI } from "@/mocks/mockData"
 
 type FloorPlanViewProps = {
   floorPlanId: string
@@ -67,9 +68,24 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/v1/floor-plans/${floorPlanId}/tables`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const backendTables: BackendTable[] = await response.json();
+      // Use mock API instead of fetch
+      const mockTables = await mockAPI.getTables(floorPlanId);
+      
+      // Convert mock tables to the format expected by mapBackendTableToFrontend
+      const backendTables: BackendTable[] = mockTables.map(table => ({
+        id: parseInt(table.id.replace('table-', ''), 10),
+        floor_plan_id: table.floor_plan_id,
+        position_x: table.x,
+        position_y: table.y,
+        width: table.width,
+        height: table.height,
+        shape: table.type as "circle" | "rectangle" | "square",
+        name: table.label,
+        seat_count: table.seats,
+        rotation: table.rotation || 0,
+        status: table.status as "available" | "reserved" | "out_of_service"
+      }));
+      
       const frontendTables = backendTables.map(mapBackendTableToFrontend);
       console.log(`[FloorPlanView] Loaded ${frontendTables.length} tables.`);
       setTables(frontendTables);

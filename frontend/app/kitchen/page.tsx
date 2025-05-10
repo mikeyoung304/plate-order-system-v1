@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { mockAPI } from "@/mocks/mockData";
 
 export default function KitchenPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -13,9 +14,8 @@ export default function KitchenPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/v1/orders?skip=0&limit=50');
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
+      // Use mock API instead of fetch
+      const data = await mockAPI.getOrders({ skip: 0, limit: 50 });
       setOrders(data);
     } catch (err) {
       console.error('Failed to fetch orders:', err);
