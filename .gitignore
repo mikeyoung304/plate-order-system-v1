@@ -1,102 +1,27 @@
-### Python ###
-__pycache__/
-*.py[cod]
-*$py.class
-*~
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
-.pytype/
-dmypy.json
-instance/
-.webassets-cache
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-### Virtual Environments ###
-env/
-venv/
-ENV/
-.env
-.venv/
-pipenv/
+# dependencies
+/node_modules
 
-### SQLite ###
-*.db
-*.sqlite3
-*.sqlite
+# next.js
+/.next/
+/out/
 
-### Logs ###
-*.log
-logs/
-log/
+# production
+/build
 
-### Node.js ###
-node_modules/
-.next/
-dist/
-build/
-coverage/
-.pnpm-store/
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-### System and Editor Files ###
-.DS_Store
-Thumbs.db
-desktop.ini
-*.swp
-*.swo
-*~
-*.iml
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json.example
-.idea/
+# env files
+.env*
 
-### Environment and Secret Files ###
-.env
-.env.secure
-.env.*.local
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.pem
-# Keep example environments
-!.env.example
+# vercel
+.vercel
 
-### Build artifacts ###
-*.so
-*.dylib
-*.dll
-*.a
-*.lib
-*.exe
-*.out
-*.app
-.Python
-public/build/
-static/build/
-.parcel-cache/
-
-### Temporary files ###
-tmp/
-temp/
-.cache/
-.tmp/
-
-### Package managers ###
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-
-# Ignore data and temp directories
-data/backend/.env
+# typescript
+*.tsbuildinfo
+next-env.d.ts
