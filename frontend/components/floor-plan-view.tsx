@@ -8,14 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Info } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "@/lib/supabaseClient"
-import { RealtimeChannel } from "@supabase/supabase-js"
 import {
   Table,
   BackendTable,
   mapBackendTableToFrontend,
 } from "@/lib/floor-plan-utils"
-import { Button } from "@/components/ui/button" // Added Button import
+import { Button } from "@/components/ui/button"
+import { mockAPI } from "@/mocks/mockData"
 
 type FloorPlanViewProps = {
   floorPlanId: string
@@ -58,7 +57,7 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
     return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
 
-  // --- Data Fetching and Real-time Sync ---
+  // --- Data Fetching (non-realtime) ---
   const fetchTables = useCallback(async () => {
     if (!floorPlanId) {
       console.warn("[FloorPlanView] floorPlanId missing.");
@@ -66,13 +65,27 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
     }
     console.log(`[FloorPlanView] Fetching tables for: ${floorPlanId}`);
     setError(null);
-    // Only set loading true on initial/retry, not on realtime update
-    // setIsLoading(true); // Managed in the effect below
+    setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/v1/floor-plans/${floorPlanId}/tables`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const backendTables: BackendTable[] = await response.json();
+      // Use mock API instead of fetch
+      const mockTables = await mockAPI.getTables(floorPlanId);
+      
+      // Convert mock tables to the format expected by mapBackendTableToFrontend
+      const backendTables: BackendTable[] = mockTables.map(table => ({
+        id: parseInt(table.id.replace('table-', ''), 10),
+        floor_plan_id: table.floor_plan_id,
+        position_x: table.x,
+        position_y: table.y,
+        width: table.width,
+        height: table.height,
+        shape: table.type as "circle" | "rectangle" | "square",
+        name: table.label,
+        seat_count: table.seats,
+        rotation: table.rotation || 0,
+        status: table.status as "available" | "reserved" | "out_of_service"
+      }));
+      
       const frontendTables = backendTables.map(mapBackendTableToFrontend);
       console.log(`[FloorPlanView] Loaded ${frontendTables.length} tables.`);
       setTables(frontendTables);
@@ -82,35 +95,15 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
       setTables([]);
       toast({ title: "Error Loading Floor Plan", description: err.message, variant: "destructive" });
     } finally {
-      if (isLoading) setIsLoading(false); // Only change loading state if it was true
+      setIsLoading(false);
     }
-  }, [floorPlanId, toast, isLoading]); // Include isLoading
+  }, [floorPlanId, toast]);
 
-  // Effect for initial load and real-time subscription
+  // Effect for initial load only
   useEffect(() => {
-    setIsLoading(true); // Set loading true for initial fetch
     fetchTables();
-
-    const channelName = `tables-changes-fp-${floorPlanId}`;
-    console.log(`[FloorPlanView] Subscribing to: ${channelName}`);
-    const channel: RealtimeChannel = supabase
-      .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables', filter: `floor_plan_id=eq.${floorPlanId}` },
-        (payload) => {
-          console.log('[FloorPlanView] Realtime change:', payload);
-          toast({ title: "Floor Plan Updated", description: "Refreshing layout.", duration: 2000 });
-          fetchTables(); // Re-fetch on change
-        })
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') console.log(`[FloorPlanView] Subscribed to ${channelName}`);
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error(`[FloorPlanView] Subscription error:`, status, err);
-          setError("Real-time connection error.");
-          toast({ title: "Real-time Error", description: "Updates may be delayed.", variant: "warning" });
-        }
-      });
-    return () => { console.log(`[FloorPlanView] Unsubscribing from: ${channelName}`); supabase.removeChannel(channel); };
-  }, [floorPlanId, fetchTables, toast]); // fetchTables is stable
+    // No real-time subscription anymore - only fetch on mount or when refresh is clicked
+  }, [floorPlanId, fetchTables]);
 
   // Calculate seat positions
   const calculateSeatPositions = useCallback((type: string, x: number, y: number, width: number, height: number, seats: number) => {
@@ -368,6 +361,20 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
         className="relative w-full bg-gray-900/70 border border-gray-700/50 rounded-xl shadow-lg overflow-hidden aspect-[4/3]"
         style={{ height: canvasSize.height }}
       >
+        {/* Header with refresh button */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700/50 bg-gray-900/80">
+          <h3 className="text-gray-200 text-sm font-medium">Floor Plan</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-gray-400 hover:text-gray-200"
+            onClick={fetchTables}
+            disabled={isLoading}
+          >
+            {isLoading ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
+
         {/* Loading State Skeleton */}
         <AnimatePresence>
           {isLoading && (
@@ -399,6 +406,15 @@ export function FloorPlanView({ floorPlanId, onSelectTable }: FloorPlanViewProps
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Table count */}
+        {!isLoading && !error && tables.length > 0 && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge variant="outline" className="bg-gray-800 text-gray-400 border-gray-700">
+              {tables.length} {tables.length === 1 ? 'table' : 'tables'}
+            </Badge>
+          </div>
+        )}
 
         {/* Canvas for drawing */}
         <canvas

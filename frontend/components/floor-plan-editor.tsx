@@ -23,6 +23,7 @@ import {
   mapBackendTableToFrontend, mapFrontendTableToCreatePayload, mapFrontendTableToUpdatePayload,
   mapFrontendStatusToBackend
 } from "@/lib/floor-plan-utils"
+import { mockAPI } from "@/mocks/mockData"
 
 // Helper constant for minimum size
 const MIN_SIZE = 20;
@@ -65,8 +66,8 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
   const [isRotating, setIsRotating] = useState(false)
   const [rotateStart, setRotateStart] = useState(0)
   const [initialRotation, setInitialRotation] = useState(0);
-  const [undoStack, setUndoStack] = useState<Table[][]>([])
-  const [redoStack, setRedoStack] = useState<Table[][]>([])
+  const [undoStack, setUndoStack] = useState<Table[][]>([[]]);
+  const [redoStack, setRedoStack] = useState<Table[][]>([]);
   const [zoomLevel, setZoomLevel] = useState(1)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
@@ -78,6 +79,10 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
   const [showTableStatus, setShowTableStatus] = useState(true)
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [originalTables, setOriginalTables] = useState<Table[]>([]);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [undoPosition, setUndoPosition] = useState<number>(0);
 
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -92,6 +97,15 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
       warning: (message: string, ...args: any[]) => console.warn(`[FloorPlanEditor] ${message}`, ...args),
   }), []);
 
+  // Create a toast wrapper function that matches our expected call signature
+  const showInternalToast = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'default' = 'default') => {
+    toast({
+      title: type.charAt(0).toUpperCase() + type.slice(1),
+      description: message,
+      variant: type === 'error' ? 'destructive' : type === 'warning' ? 'warning' as any : 'default',
+    });
+  }, [toast]);
+
   // Default table creator
   const createDefaultTable = (): Table => ({
     id: `table-${Date.now()}`, type: "circle", x: 200, y: 200, width: 100, height: 100,
@@ -99,53 +113,51 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
   });
 
   // Load initial tables
-  const loadTablesFromAPI = useCallback(async (shouldInitializeUndo = false) => {
-    if (!floorPlanId) {
-        logger.warning("floorPlanId is missing, cannot load tables.");
-        const defaultTable = createDefaultTable();
-        setTables([defaultTable]);
-        if (shouldInitializeUndo) setUndoStack([[defaultTable]]);
-        setIsLoading(false);
-        return;
-    }
-    logger.info(`Loading tables for floor plan ID: ${floorPlanId}`);
+  const loadTables = useCallback(async () => {
+    logger.info(`Loading tables for floor plan: ${floorPlanId}`);
     setIsLoading(true);
+    setLoadError(null);
+
     try {
-      const response = await fetch(`/api/v1/floor-plans/${floorPlanId}/tables`);
-      if (!response.ok) {
-        if (response.status === 404) {
-             logger.warning(`Floor plan ${floorPlanId} not found on backend.`);
-             const defaultTable = createDefaultTable();
-             setTables([defaultTable]);
-             if (shouldInitializeUndo) setUndoStack([[defaultTable]]);
-        } else { throw new Error(`HTTP error! status: ${response.status}`); }
-      } else {
-          const backendTables: BackendTable[] = await response.json();
-          if (backendTables && backendTables.length > 0) {
-            const frontendTables = backendTables.map(mapBackendTableToFrontend);
-            logger.info(`Loaded ${frontendTables.length} tables from API.`);
-            setTables(frontendTables);
-            if (shouldInitializeUndo) setUndoStack([frontendTables]);
-          } else {
-            logger.info("No tables found for this floor plan ID, using empty state.");
-            setTables([]);
-            if (shouldInitializeUndo) setUndoStack([[]]);
-          }
-      }
-    } catch (error) {
-      logger.error("Error loading tables from API:", error);
-      toast({ title: "Error Loading Floor Plan", description: "Could not load tables. Falling back to default.", variant: "destructive" });
-      const defaultTable = createDefaultTable();
-      setTables([defaultTable]);
-      if (shouldInitializeUndo) setUndoStack([[defaultTable]]);
+      // Use mock API instead of fetch
+      const mockTables = await mockAPI.getTables(floorPlanId);
+      
+      // Convert mock tables to the format expected by mapBackendTableToFrontend
+      const backendTables: BackendTable[] = mockTables.map(table => ({
+        id: parseInt(table.id.replace('table-', ''), 10),
+        floor_plan_id: table.floor_plan_id,
+        position_x: table.x,
+        position_y: table.y,
+        width: table.width,
+        height: table.height,
+        shape: table.type as "circle" | "rectangle" | "square",
+        name: table.label,
+        seat_count: table.seats,
+        rotation: table.rotation || 0,
+        status: table.status as "available" | "reserved" | "out_of_service"
+      }));
+      
+      logger.info(`Retrieved ${backendTables.length} tables for floor plan`);
+      
+      const frontendTables = backendTables.map(mapBackendTableToFrontend);
+      setTables(frontendTables);
+      setOriginalTables(JSON.parse(JSON.stringify(frontendTables)));
+      
+      return frontendTables;
+    } catch (error: any) {
+      const errorMsg = `Error loading tables: ${error.message}`;
+      logger.error(errorMsg);
+      setLoadError(errorMsg);
+      showInternalToast("Failed to load floor plan tables", "error");
+      return [];
     } finally {
       setIsLoading(false);
     }
-  }, [floorPlanId, logger, toast]); // Keep toast here
+  }, [floorPlanId, logger, showInternalToast]);
 
   useEffect(() => {
-    loadTablesFromAPI(true);
-  }, [loadTablesFromAPI]);
+    loadTables();
+  }, [loadTables]);
 
   // Adjust canvas size
   useEffect(() => {
@@ -805,7 +817,7 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
       }
       
       // Reload tables from API to ensure we have latest data
-      await loadTablesFromAPI();
+      await loadTables();
       
       toast({
         title: "Success",
@@ -824,7 +836,7 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [tables, floorPlanId, loadTablesFromAPI, toast, logger, mapFrontendStatusToBackend]);
+  }, [tables, floorPlanId, loadTables, toast, logger, mapFrontendStatusToBackend]);
 
   // --- Mouse/Keyboard Event Handlers ---
 
@@ -933,6 +945,71 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
     }
   };
 
+  // --- Table Saving ---
+  const saveTables = useCallback(async (tablesToSave: Table[] = tables) => {
+    if (!floorPlanId) {
+      logger.error("Cannot save tables: No floor plan ID provided");
+      return false;
+    }
+
+    setIsSaving(true);
+    logger.info(`Saving ${tablesToSave.length} tables to floor plan ${floorPlanId}`);
+
+    try {
+      // Convert the frontend tables to mock format before saving
+      const mockFormatTables = tablesToSave.map(table => ({
+        id: table.id,
+        floor_plan_id: floorPlanId,
+        label: table.label,
+        x: table.x,
+        y: table.y,
+        width: table.width,
+        height: table.height,
+        type: table.type,
+        seats: table.seats,
+        rotation: table.rotation || 0,
+        status: table.status || "available"
+      }));
+      
+      // Use mock API to update tables
+      await mockAPI.updateTables(floorPlanId, mockFormatTables);
+      
+      logger.info("Tables saved successfully");
+      setUnsavedChanges(false);
+      setOriginalTables(JSON.parse(JSON.stringify(tablesToSave)));
+      showInternalToast("Floor plan saved successfully", "success");
+      return true;
+    } catch (error: any) {
+      const errorMsg = `Error saving tables: ${error.message}`;
+      logger.error(errorMsg);
+      showInternalToast("Failed to save floor plan changes", "error");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [floorPlanId, tables, logger, showInternalToast]);
+
+  // Add MAX_UNDO_STATES constant and undoStack state if they don't exist
+  const MAX_UNDO_STATES = 20; // Maximum number of undo states to store
+
+  // Add the handleAddTableToUndoStack function to fix linter errors
+  const handleAddTableToUndoStack = useCallback((nextState: Table[]) => {
+    if (!nextState) return;
+    
+    setUndoStack(stack => {
+      const newStack = [...stack.slice(0, undoPosition + 1), [...nextState]];
+      if (newStack.length > MAX_UNDO_STATES) {
+        return newStack.slice(newStack.length - MAX_UNDO_STATES);
+      }
+      return newStack;
+    });
+    
+    setUndoPosition(prev => {
+      const newPos = Math.min(prev + 1, MAX_UNDO_STATES - 1);
+      return newPos;
+    });
+  }, [undoPosition]);
+
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Toolbar */}
@@ -951,7 +1028,7 @@ export function FloorPlanEditor({ floorPlanId }: FloorPlanEditorProps) {
          </div>
          <div className="flex items-center gap-2">
            <Button variant="outline" size="sm" onClick={handleResetView} className="text-sm gap-1" disabled={isSaving}>Reset View</Button>
-           <Button variant="default" size="sm" onClick={handleSaveFloorPlan} className="text-sm gap-1 bg-blue-600 hover:bg-blue-700" disabled={isSaving || isLoading}>
+           <Button variant="default" size="sm" onClick={() => saveTables()} className="text-sm gap-1 bg-blue-600 hover:bg-blue-700" disabled={isSaving || isLoading}>
              {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
              {isSaving ? "Saving..." : "Save"}
            </Button>

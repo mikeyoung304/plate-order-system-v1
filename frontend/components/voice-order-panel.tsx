@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast"; // Corrected import path if needed
 import { Mic, Square, AlertCircle, CheckCircle2, XCircle, Volume2, MicOff, Loader2 } from "lucide-react"; // Added Loader2
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
+import { mockAPI } from "@/mocks/mockData";
 
 // Constants
 const MAX_RECORDING_TIME = 30000; // 30 seconds
@@ -150,54 +151,25 @@ export function VoiceOrderPanel({ tableId, tableName, seatNumber, orderType, onO
 
   // --- Whisper API Call (via Backend Route) ---
   const sendToWhisper = useCallback(async (audioBlob: Blob) => {
-    // Determine a filename based on MIME type
-    const fileExtension = audioBlob.type.split('/')[1]?.split(';')[0] || 'webm';
-    const filename = `audio.${fileExtension}`;
-
-    // Create a File object for the FormData
-    const audioFile = new File([audioBlob], filename, { type: audioBlob.type });
-
-    const formData = new FormData();
-    formData.append("file", audioFile);
-    // Note: Model is now handled by the backend route
-
-    logger.info(`Sending audio (${(audioBlob.size / 1024).toFixed(2)} KB) to backend route /api/v1/speech/transcribe...`);
-
     try {
-        // Call our internal API route instead of OpenAI directly
-        const response = await fetch('/api/v1/speech/transcribe', {
-            method: "POST",
-            // No Authorization header needed here; backend handles the key
-            body: formData,
-            // Content-Type is set automatically by fetch for FormData
-        });
-
-        const data = await response.json(); // Always try to parse JSON
-
-        if (!response.ok) {
-            const errorMessage = data?.error || `API route error: ${response.statusText}`;
-            logger.error(`Backend API Error (${response.status}):`, errorMessage);
-            showInternalToast(`Transcription failed: ${errorMessage}`, "error");
-            throw new Error(`API route request failed with status ${response.status}`);
-        }
-
-        logger.info("Backend API Response:", data);
-
-        if (!data.text || typeof data.text !== 'string') {
-             logger.error("Backend API response did not contain valid text.", data);
-             showInternalToast("Transcription failed: Invalid response format from server.", "error");
-             throw new Error("Invalid API response format from server");
-        }
-
-        return data.text.trim(); // Return the transcribed text
-
+      logger.info(`Sending audio (${(audioBlob.size / 1024).toFixed(2)} KB) for transcription...`);
+      
+      // Use mock API directly instead of making a fetch call
+      const transcriptionResult = await mockAPI.transcribeAudio(audioBlob);
+      
+      logger.info("Mock transcription response:", transcriptionResult);
+      
+      if (!transcriptionResult.text || typeof transcriptionResult.text !== 'string') {
+        logger.error("Mock transcription returned invalid text format:", transcriptionResult);
+        showInternalToast("Transcription failed: Invalid response format", "error");
+        throw new Error("Invalid mock transcription format");
+      }
+      
+      return transcriptionResult.text.trim(); // Return the transcribed text
     } catch (error: any) {
-        logger.error("Error calling backend transcription route:", error);
-        // Avoid double-toasting if error was already handled above
-        if (!error.message.includes('API route request failed')) {
-            showInternalToast("Transcription failed. Could not reach server.", "error");
-        }
-        throw error; // Re-throw to be caught in stopRecording
+      logger.error("Error in mock transcription:", error);
+      showInternalToast("Transcription failed. Could not process audio.", "error");
+      throw error;
     }
   }, [logger, showInternalToast]);
 

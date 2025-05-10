@@ -14,6 +14,7 @@ import { ChevronLeft, Utensils, Coffee, Info, Clock, History } from "lucide-reac
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion, AnimatePresence } from "framer-motion"
 import { Table } from "@/lib/floor-plan-utils"
+import { mockAPI } from "@/mocks/mockData"
 
 export default function ServerPage() {
   const [floorPlanId, setFloorPlanId] = useState("default") // Example ID
@@ -92,13 +93,9 @@ export default function ServerPage() {
       transcript: orderText,
     };
     try {
-      const res = await fetch('/api/v1/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
+      // Use mock API instead of fetch
+      const data = await mockAPI.createOrder(payload);
+      
       // Prepend new order to recentOrders with formatted display
       const formatted = {
         id: data.id,
@@ -110,7 +107,11 @@ export default function ServerPage() {
         statusClass: data.status === 'new' ? 'status-new' : '',
       };
       setRecentOrders([formatted, ...recentOrders.slice(0, 4)]);
-      toast({ title: 'Order Submitted', description: 'Your order has been sent to the kitchen.', variant: 'success' });
+      toast({ 
+        title: 'Order Submitted', 
+        description: 'Your order has been sent to the kitchen.',
+        variant: 'default'
+      });
       handleBackToFloorPlan();
     } catch (err) {
       console.error('Order submission error:', err);
