@@ -38,15 +38,19 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   await supabase.auth.getUser()
 
-  // Allow access to landing page and API routes
-  if (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/api/')) {
+  // Public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/signup']
+  if (publicRoutes.includes(request.nextUrl.pathname)) {
     return response
   }
 
-  // Get user session
-  const { data: { user } } = await supabase.auth.getUser()
+  // API routes are handled separately
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    return response
+  }
 
-  // Redirect to landing page if not authenticated
+  // Check authentication for all other routes
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.redirect(new URL('/', request.url))
   }

@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/AuthContext"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { createClient } from "@/lib/supabase/client"
 
 export function AuthForm() {
   const [email, setEmail] = useState("")
@@ -14,8 +15,9 @@ export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null })
-  const { signIn, signUp } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
+  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,9 +26,17 @@ export function AuthForm() {
     
     try {
       if (isSignUp) {
-        await signUp(email, password)
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+        if (error) throw error
+        
         setStatus({
-          message: "Account created! Please check your email for the confirmation link.",
+          message: "Check your email for the confirmation link.",
           type: 'success'
         })
         toast({
@@ -34,11 +44,14 @@ export function AuthForm() {
           description: "Check your email for the confirmation link.",
         })
       } else {
-        await signIn(email, password)
-        setStatus({
-          message: "Signing you in...",
-          type: 'success'
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         })
+        if (error) throw error
+
+        router.push('/dashboard')
+        router.refresh()
       }
     } catch (error) {
       const errorMessage = isSignUp 

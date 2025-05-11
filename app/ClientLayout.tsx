@@ -4,7 +4,6 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { AuthProvider } from "@/lib/AuthContext"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -18,10 +17,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider defaultTheme="dark">
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
+          {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
