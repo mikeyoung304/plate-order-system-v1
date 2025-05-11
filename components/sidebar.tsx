@@ -4,17 +4,19 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useMediaQuery } from "@/hooks/use-media-query"
-import { LayoutDashboard, Utensils, ChefHat, Shield, Settings, Menu, X, LogOut } from "lucide-react"
+import { LayoutDashboard, Utensils, ChefHat, Shield, Settings, Menu, X, LogOut, ChevronLeft } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { motion } from "framer-motion"
+import { useAuth } from "@/lib/AuthContext"
+import { useToast } from "@/components/ui/use-toast"
 
 type NavItem = {
   name: string
@@ -25,10 +27,13 @@ type NavItem = {
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [notifications, setNotifications] = useState(3) // Example notification count
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { signOut } = useAuth()
+  const { toast } = useToast()
 
   // Reset mobile menu state when screen size changes
   useEffect(() => {
@@ -88,6 +93,23 @@ export function Sidebar() {
     show: { opacity: 1, x: 0, transition: { duration: 0.3 } },
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push('/')
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const renderNavItems = () => (
     <motion.ul variants={container} initial="hidden" animate="show" className="space-y-1 px-2">
       {navItems.map((navItem) => ( // Renamed inner variable to avoid conflict
@@ -140,8 +162,7 @@ export function Sidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64 bg-[#1a1a24] border-gray-800 flex flex-col"> {/* Added flex flex-col */}
-            {/* Header */}
+          <SheetContent side="left" className="p-0 w-64 bg-[#1a1a24] border-gray-800 flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-gray-800">
               <div className="flex items-center">
                 <div className="relative h-8 w-8 mr-2">
@@ -154,16 +175,12 @@ export function Sidebar() {
               </Button>
             </div>
 
-            {/* Navigation */}
             <nav className="flex-grow py-4 overflow-y-auto">{renderNavItems()}</nav>
 
-            {/* Footer/User Area */}
-            <div className="p-4 border-t border-gray-800 mt-auto"> {/* Added mt-auto */}
+            <div className="p-4 border-t border-gray-800 mt-auto">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Avatar className="h-8 w-8 mr-2">
-                    {/* Replace with actual user image or fallback */}
-                    {/* <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" /> */}
                     <AvatarFallback>JD</AvatarFallback>
                   </Avatar>
                   <div>
@@ -171,7 +188,12 @@ export function Sidebar() {
                     <p className="text-xs text-gray-400 sf-pro-text">Server</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" aria-label="Log Out">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={handleSignOut}
+                  className="text-gray-400 hover:text-white hover:bg-white/10"
+                >
                   <LogOut className="h-5 w-5" />
                 </Button>
               </div>
@@ -184,13 +206,12 @@ export function Sidebar() {
 
   // Desktop sidebar
   return (
-    <div // This is the start of the desktop return (line 179 in original)
+    <div
       className={cn(
-        "hidden md:flex flex-col h-screen bg-[#1a1a24] border-r border-gray-800 transition-all duration-300 ease-in-out", // Added hidden md:flex
+        "hidden md:flex flex-col h-screen bg-[#1a1a24] border-r border-gray-800 transition-all duration-300 ease-in-out",
         collapsed ? "w-16" : "w-64",
       )}
     >
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex items-center">
           <div className="relative h-8 w-8 mr-2">
@@ -198,52 +219,49 @@ export function Sidebar() {
           </div>
           {!collapsed && <span className="text-xl font-semibold sf-pro-display">Plate</span>}
         </div>
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCollapsed(!collapsed)}
-                aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-              >
-                {/* Use different icons for collapse/expand */}
-                {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{collapsed ? "Expand" : "Collapse"}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(!collapsed)}
+          className="hover:bg-white/5"
+          aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          <ChevronLeft className={cn("h-5 w-5 transition-transform", collapsed && "rotate-180")} />
+        </Button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-grow py-4 overflow-y-auto">{renderNavItems()}</nav>
 
-      {/* Footer/User Area */}
-      <div className="p-4 border-t border-gray-800 mt-auto"> {/* Added mt-auto */}
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* Wrap clickable area if needed, or apply directly */}
-              <div className="flex items-center cursor-pointer">
-                <Avatar className="h-8 w-8 mr-3">
-                   {/* Replace with actual user image or fallback */}
-                  {/* <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" /> */}
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                {!collapsed && (
-                  <div>
-                    <p className="text-sm font-medium sf-pro-text">John Doe</p>
-                    <p className="text-xs text-gray-400 sf-pro-text">Server</p>
-                  </div>
-                )}
+      <div className="p-4 border-t border-gray-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center min-w-0">
+            <Avatar className="h-8 w-8 mr-2 flex-shrink-0">
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-medium sf-pro-text truncate">John Doe</p>
+                <p className="text-xs text-gray-400 sf-pro-text">Server</p>
               </div>
-            </TooltipTrigger>
-            {/* Show tooltip only when collapsed */}
-            {collapsed && <TooltipContent side="right">John Doe (Server)</TooltipContent>}
-          </Tooltip>
-        </TooltipProvider>
+            )}
+          </div>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                  className="text-gray-400 hover:text-white hover:bg-white/10"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign Out</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     </div>
-  );
+  )
 }
