@@ -14,14 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { motion } from "framer-motion"
 import { useToast } from "@/components/ui/use-toast"
-import { createClient } from "@/lib/supabase/client"
-
-type NavItem = {
-  name: string
-  href: string
-  icon: React.ReactNode
-  badge?: number
-}
+import { supabase } from "@/lib/supabaseClient"
+import { useAuth } from "@/lib/AuthContext"
 
 // Animation variants
 const container = {
@@ -39,14 +33,33 @@ const item = {
   show: { opacity: 1, x: 0 }
 }
 
+type NavItem = {
+  name: string
+  href: string
+  icon: React.ReactNode
+  badge?: number
+}
+
+type UserRole = {
+  role: string
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { toast } = useToast()
+  const [collapsed, setCollapsed] = useState(false)
+  const [notifications, setNotifications] = useState(3)
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
-  const supabase = createClient()
+  const { user, signOut, userRole } = useAuth()
+  const { toast } = useToast()
+
+  // Reset mobile menu state when screen size changes
+  useEffect(() => {
+    if (!isMobile && isMobileOpen) {
+      setIsMobileOpen(false)
+    }
+  }, [isMobile, isMobileOpen])
 
   const navItems: NavItem[] = [
     {
@@ -81,9 +94,7 @@ export function Sidebar() {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
+      await signOut()
       router.push('/')
       router.refresh()
       toast({
@@ -140,6 +151,66 @@ export function Sidebar() {
     </motion.ul>
   )
 
+  // In the mobile view
+  const userInfoSection = (
+    <div className="p-4 border-t border-gray-800 mt-auto">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <Avatar className="h-8 w-8 mr-2">
+            <AvatarFallback>{user?.user_metadata?.full_name?.[0] || 'U'}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium sf-pro-text">{user?.user_metadata?.full_name || 'User'}</p>
+            <p className="text-xs text-gray-400 sf-pro-text capitalize">{userRole || 'Loading...'}</p>
+          </div>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={handleSignOut}
+          className="text-gray-400 hover:text-white hover:bg-white/10"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
+    </div>
+  )
+
+  // In the desktop view
+  const desktopUserInfoSection = (
+    <div className="p-4 border-t border-gray-800">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center min-w-0">
+          <Avatar className="h-8 w-8 mr-2 flex-shrink-0">
+            <AvatarFallback>{user?.user_metadata?.full_name?.[0] || 'U'}</AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="text-sm font-medium sf-pro-text truncate">{user?.user_metadata?.full_name || 'User'}</p>
+              <p className="text-xs text-gray-400 sf-pro-text capitalize">{userRole || 'Loading...'}</p>
+            </div>
+          )}
+        </div>
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                className="text-gray-400 hover:text-white hover:bg-white/10"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Sign Out</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </div>
+  )
+
+  // Mobile sidebar
   if (isMobile) {
     return (
       <>
@@ -157,7 +228,7 @@ export function Sidebar() {
             <div className="flex flex-col h-full">
               <div className="p-4">
                 <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Plate_Logo_HighRes_Transparent-KHpujinpES74Q3nyKx1Nd3ogN1r9t7.png"
+                  src="/images/plate-logo-white.png"
                   alt="Logo"
                   width={32}
                   height={32}
@@ -166,27 +237,7 @@ export function Sidebar() {
 
               {renderNavItems()}
 
-              <div className="p-4 border-t border-gray-800 mt-auto">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Avatar className="h-8 w-8 mr-2">
-                      <AvatarFallback>JD</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium sf-pro-text">John Doe</p>
-                      <p className="text-xs text-gray-400 sf-pro-text">Server</p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={handleSignOut}
-                    className="text-gray-400 hover:text-white hover:bg-white/10"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
+              {userInfoSection}
             </div>
           </SheetContent>
         </Sheet>
@@ -194,6 +245,7 @@ export function Sidebar() {
     )
   }
 
+  // Desktop sidebar
   return (
     <div
       className={cn(
@@ -203,7 +255,7 @@ export function Sidebar() {
     >
       <div className="p-4 flex items-center justify-between">
         <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Plate_Logo_HighRes_Transparent-KHpujinpES74Q3nyKx1Nd3ogN1r9t7.png"
+          src="/images/plate-logo-white.png"
           alt="Logo"
           width={32}
           height={32}
@@ -220,35 +272,7 @@ export function Sidebar() {
 
       {renderNavItems()}
 
-      <div className={cn(
-        "p-4 border-t border-gray-800 mt-auto",
-        collapsed && "flex justify-center"
-      )}>
-        <div className={cn(
-          "flex items-center",
-          collapsed ? "justify-center" : "justify-between"
-        )}>
-          {!collapsed && (
-            <div className="flex items-center">
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-medium sf-pro-text">John Doe</p>
-                <p className="text-xs text-gray-400 sf-pro-text">Server</p>
-              </div>
-            </div>
-          )}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleSignOut}
-            className="text-gray-400 hover:text-white hover:bg-white/10"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
+      {desktopUserInfoSection}
     </div>
   )
 }

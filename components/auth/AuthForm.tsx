@@ -7,17 +7,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/AuthContext"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [role, setRole] = useState<"server" | "cook" | "">("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null })
   const { toast } = useToast()
   const router = useRouter()
-  const supabase = createClient()
+  const { signIn, signUp } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,15 +35,13 @@ export function AuthForm() {
     
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
-        if (error) throw error
-        
+        if (!name) {
+          throw new Error("Name is required")
+        }
+        if (!role) {
+          throw new Error("Role is required")
+        }
+        await signUp(email, password, name, role)
         setStatus({
           message: "Check your email for the confirmation link.",
           type: 'success'
@@ -44,19 +51,13 @@ export function AuthForm() {
           description: "Check your email for the confirmation link.",
         })
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (error) throw error
-
+        await signIn(email, password)
         router.push('/dashboard')
         router.refresh()
       }
     } catch (error) {
-      const errorMessage = isSignUp 
-        ? "Could not create account. Please try again." 
-        : "Invalid email or password."
+      const errorMessage = error instanceof Error ? error.message : 
+        isSignUp ? "Could not create account. Please try again." : "Invalid email or password."
       setStatus({
         message: errorMessage,
         type: 'error'
@@ -74,6 +75,19 @@ export function AuthForm() {
   return (
     <div className="w-full space-y-4">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {isSignUp && (
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Enter your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -96,6 +110,20 @@ export function AuthForm() {
             required
           />
         </div>
+        {isSignUp && (
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select value={role} onValueChange={(value: "server" | "cook") => setRole(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="server">Server</SelectItem>
+                <SelectItem value="cook">Cook</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {status.message && (
           <Alert variant={status.type === 'error' ? 'destructive' : 'default'}>
             <AlertDescription>
@@ -117,6 +145,8 @@ export function AuthForm() {
           onClick={() => {
             setIsSignUp(!isSignUp)
             setStatus({ message: '', type: null })
+            setName("")
+            setRole("")
           }}
         >
           {isSignUp ? "Already have an account? Sign in" : "Need an account? Create one"}
