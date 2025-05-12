@@ -15,17 +15,41 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion, AnimatePresence } from "framer-motion"
 import { Table } from "@/lib/floor-plan-utils"
 import { mockAPI } from "@/mocks/mockData"
+import { fetchTables } from "@/lib/tables"
 
 export default function ServerPage() {
   const [floorPlanId, setFloorPlanId] = useState("default") // Example ID
+  const [tables, setTables] = useState<Table[]>([])
   const [selectedTable, setSelectedTable] = useState<Table | null>(null)
   const [showSeatPicker, setShowSeatPicker] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
   const [orderType, setOrderType] = useState<"food" | "drink" | null>(null)
-  // Removed tablesExist state - rely on FloorPlanView's internal loading/error state
   const [recentOrders, setRecentOrders] = useState<any[]>([])
   const { toast } = useToast()
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [loading, setLoading] = useState(true)
+
+  // Fetch tables from Supabase
+  useEffect(() => {
+    const loadTables = async () => {
+      try {
+        setLoading(true);
+        const fetchedTables = await fetchTables();
+        setTables(fetchedTables);
+      } catch (error) {
+        console.error('Error loading tables:', error);
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to load tables. Please refresh the page.', 
+          variant: 'destructive' 
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTables();
+  }, [toast]);
 
   // Update current time
   useEffect(() => {
@@ -161,8 +185,17 @@ export default function ServerPage() {
                         <p className="text-gray-400 text-sm mt-1">Choose a table to place an order</p>
                       </div>
                       <div className="p-6">
-                        {/* FloorPlanView handles its own loading/error state */}
-                        <FloorPlanView floorPlanId={floorPlanId} onSelectTable={handleSelectTable} />
+                        {loading ? (
+                          <div className="flex items-center justify-center h-96">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+                          </div>
+                        ) : (
+                          <FloorPlanView 
+                            floorPlanId={floorPlanId} 
+                            onSelectTable={handleSelectTable}
+                            tables={tables} // Pass the fetched tables
+                          />
+                        )}
                       </div>
                     </CardContent>
                   </Card>
