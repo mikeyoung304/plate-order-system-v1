@@ -50,10 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check active sessions and sets the user
     const initializeAuth = async () => {
       try {
-        const { data: { user: initialUser } } = await supabase.auth.getUser()
-        setUser(initialUser)
-        if (initialUser) {
-          await fetchUserRole(initialUser.id)
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user || null)
+        if (session?.user) {
+          await fetchUserRole(session.user.id)
         }
       } catch (error) {
         console.error('Error loading user:', error)
@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for changes on auth state
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id)
       setUser(session?.user ?? null)
       if (event === 'SIGNED_IN' && session?.user) {
         await fetchUserRole(session.user.id)
@@ -103,8 +104,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      // Call server-side signout to clear cookies
+      await fetch('/api/auth/signout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      
+      // Clear client-side session
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      if (error) throw error
+      
+      // Force page refresh to ensure everything is cleared
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
   }
 
   return (

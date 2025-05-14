@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -9,38 +9,37 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const supabase = createServerClient(
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: any) {
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
+      global: {
+        fetch: fetch.bind(globalThis)
       },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true
+      }
     }
   )
 
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getUser()
+  // Look for both possible cookie names
+  const accessToken = request.cookies.get('sb-access-token')?.value || 
+                      request.cookies.get('sb-auth-token')?.value
+
+  const refreshToken = request.cookies.get('sb-refresh-token')?.value
+  
+  if (accessToken) {
+    // Set the auth cookie for this client session
+    await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken || '',
+    })
+  }
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/signup']
-  if (publicRoutes.includes(request.nextUrl.pathname)) {
+  const publicRoutes = ['/', '/login', '/signup', '/auth/callback']
+  if (publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     return response
   }
 

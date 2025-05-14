@@ -11,7 +11,7 @@ import { Clock, CheckCircle, AlertCircle, ChefHat, Utensils } from "lucide-react
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { motion, AnimatePresence } from "framer-motion"
-import { fetchRecentOrders, subscribeToOrders, type Order } from "@/lib/orders"
+import { fetchRecentOrders, type Order } from "@/lib/orders"
 import { createClient } from "@/lib/supabase/client"
 
 export default function ExpoPage() {
@@ -40,35 +40,6 @@ export default function ExpoPage() {
 
     loadOrders()
   }, [toast])
-
-  // Subscribe to real-time order updates
-  useEffect(() => {
-    const unsubscribe = subscribeToOrders(
-      (order) => {
-        setOrders(prev => {
-          // If the order already exists, update it
-          const exists = prev.some(o => o.id === order.id);
-          if (exists) {
-            return prev.map(o => o.id === order.id ? order : o);
-          }
-          // Otherwise, add it to the beginning and maintain limit
-          return [order, ...prev].slice(0, 50);
-        });
-      },
-      (error) => {
-        console.error('Subscription error:', error);
-        toast({ 
-          title: 'Connection Error', 
-          description: 'Lost connection to order updates. Please refresh.', 
-          variant: 'destructive' 
-        });
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [toast]);
 
   // Mark order as delivered
   const markAsDelivered = async (orderId: string) => {

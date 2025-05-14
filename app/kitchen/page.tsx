@@ -35,35 +35,6 @@ export default function KitchenPage() {
     loadOrders();
   }, [toast]);
 
-  // Subscribe to real-time order updates
-  useEffect(() => {
-    const unsubscribe = subscribeToOrders(
-      (order) => {
-        setOrders(prev => {
-          // If the order already exists, update it
-          const exists = prev.some(o => o.id === order.id);
-          if (exists) {
-            return prev.map(o => o.id === order.id ? order : o);
-          }
-          // Otherwise, add it to the beginning and maintain limit
-          return [order, ...prev].slice(0, 50);
-        });
-      },
-      (error) => {
-        console.error('Subscription error:', error);
-        toast({ 
-          title: 'Connection Error', 
-          description: 'Lost connection to order updates. Please refresh.', 
-          variant: 'destructive' 
-        });
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [toast]);
-
   return (
     <div className="p-8 bg-gray-900 min-h-screen">
       <h1 className="text-3xl font-bold text-white mb-4">Kitchen View</h1>

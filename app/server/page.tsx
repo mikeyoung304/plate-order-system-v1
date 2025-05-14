@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Table } from "@/lib/floor-plan-utils"
 import { fetchTables } from "@/lib/tables"
 import { useAuth } from "@/lib/AuthContext"
-import { fetchRecentOrders, createOrder, subscribeToOrders, type Order } from "@/lib/orders"
+import { fetchRecentOrders, createOrder, type Order } from "@/lib/orders"
 import { createClient } from "@/lib/supabase/client"
 
 export default function ServerPage() {
@@ -77,35 +77,6 @@ export default function ServerPage() {
     };
 
     loadOrders();
-  }, [toast]);
-
-  // Subscribe to order updates
-  useEffect(() => {
-    const unsubscribe = subscribeToOrders(
-      (order) => {
-        setRecentOrders(prev => {
-          // If the order already exists, update it
-          const exists = prev.some(o => o.id === order.id);
-          if (exists) {
-            return prev.map(o => o.id === order.id ? order : o);
-          }
-          // Otherwise, add it to the beginning and maintain limit of 5
-          return [order, ...prev].slice(0, 5);
-        });
-      },
-      (error) => {
-        console.error('Subscription error:', error);
-        toast({ 
-          title: 'Error', 
-          description: 'Failed to receive order updates', 
-          variant: 'destructive' 
-        });
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
   }, [toast]);
 
   // --- Navigation and Selection Handlers ---
