@@ -14,8 +14,10 @@ import { ChevronLeft, Utensils, Coffee, Info, Clock, History } from "lucide-reac
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion, AnimatePresence } from "framer-motion"
 import { Table } from "@/lib/floor-plan-utils"
-import { mockAPI } from "@/mocks/mockData"
 import { fetchTables } from "@/lib/tables"
+import { useAuth } from "@/lib/AuthContext"
+import { fetchRecentOrders, createOrder, subscribeToOrders, type Order } from "@/lib/orders"
+import { createClient } from "@/lib/supabase/client"
 
 export default function ServerPage() {
   const [floorPlanId, setFloorPlanId] = useState("default") // Example ID
@@ -24,10 +26,11 @@ export default function ServerPage() {
   const [showSeatPicker, setShowSeatPicker] = useState(false);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null)
   const [orderType, setOrderType] = useState<"food" | "drink" | null>(null)
-  const [recentOrders, setRecentOrders] = useState<any[]>([])
+  const [recentOrders, setRecentOrders] = useState<Order[]>([])
   const { toast } = useToast()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
 
   // Fetch tables from Supabase
   useEffect(() => {
@@ -57,14 +60,53 @@ export default function ServerPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load recent orders (mock data)
+  // Load recent orders
   useEffect(() => {
-    setRecentOrders([
-      { id: "ORD-001", table: "Table 5", seat: 2, items: ["Grilled Salmon", "Caesar Salad"], time: "5m ago", status: "Ready", statusClass: "status-ready" },
-      { id: "ORD-002", table: "Table 3", seat: 1, items: ["Ribeye Steak", "Mashed Potatoes"], time: "12m ago", status: "Cooking", statusClass: "status-cooking" },
-      { id: "ORD-003", table: "Table 8", seat: 4, items: ["Vegetable Pasta"], time: "15m ago", status: "New", statusClass: "status-new" },
-    ]);
-  }, []);
+    const loadOrders = async () => {
+      try {
+        const orders = await fetchRecentOrders(5);
+        setRecentOrders(orders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to load recent orders', 
+          variant: 'destructive' 
+        });
+      }
+    };
+
+    loadOrders();
+  }, [toast]);
+
+  // Subscribe to order updates
+  useEffect(() => {
+    const unsubscribe = subscribeToOrders(
+      (order) => {
+        setRecentOrders(prev => {
+          // If the order already exists, update it
+          const exists = prev.some(o => o.id === order.id);
+          if (exists) {
+            return prev.map(o => o.id === order.id ? order : o);
+          }
+          // Otherwise, add it to the beginning and maintain limit of 5
+          return [order, ...prev].slice(0, 5);
+        });
+      },
+      (error) => {
+        console.error('Subscription error:', error);
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to receive order updates', 
+          variant: 'destructive' 
+        });
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [toast]);
 
   // --- Navigation and Selection Handlers ---
 
@@ -106,42 +148,54 @@ export default function ServerPage() {
 
   // Called by VoiceOrderPanel upon successful transcription
   const handleOrderSubmitted = useCallback(async (orderText: string) => {
-    if (!selectedTable || selectedSeat == null) {
+    if (!selectedTable || selectedSeat == null || !user) {
       toast({ title: "Error", description: "Table or seat not selected.", variant: "destructive" });
       return;
     }
-    const payload = {
-      table_id: selectedTable.id,
-      seat_id: selectedSeat,
-      items: orderText.split(",").map(item => item.trim()).filter(item => item),
-      transcript: orderText,
-    };
+
+    // Get the seat ID from the seats data in the tables response
+    const supabase = createClient();
+    const seatData = await supabase
+      .from('seats')
+      .select('id')
+      .eq('table_id', selectedTable.id)
+      .eq('label', selectedSeat)
+      .single();
+
+    if (seatData.error || !seatData.data) {
+      toast({ title: "Error", description: "Invalid seat selection.", variant: "destructive" });
+      return;
+    }
+
     try {
-      // Use mock API instead of fetch
-      const data = await mockAPI.createOrder(payload);
-      
-      // Prepend new order to recentOrders with formatted display
-      const formatted = {
-        id: data.id,
-        table: selectedTable.label,
-        seat: selectedSeat,
-        items: data.items || payload.items,
-        time: new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: data.status,
-        statusClass: data.status === 'new' ? 'status-new' : '',
+      const orderData = {
+        table_id: selectedTable.id,
+        seat_id: seatData.data.id,
+        resident_id: user.id, // Temporarily using server as resident for testing
+        server_id: user.id,
+        items: orderText.split(",").map(item => item.trim()).filter(item => item),
+        transcript: orderText,
+        type: orderType || 'food'
       };
-      setRecentOrders([formatted, ...recentOrders.slice(0, 4)]);
+
+      const order = await createOrder(orderData);
+      
       toast({ 
         title: 'Order Submitted', 
         description: 'Your order has been sent to the kitchen.',
         variant: 'default'
       });
+      
       handleBackToFloorPlan();
     } catch (err) {
       console.error('Order submission error:', err);
-      toast({ title: 'Submission Failed', description: 'Could not submit order. Please retry.', variant: 'destructive' });
+      toast({ 
+        title: 'Submission Failed', 
+        description: 'Could not submit order. Please retry.', 
+        variant: 'destructive' 
+      });
     }
-  }, [selectedTable, selectedSeat, recentOrders, toast, handleBackToFloorPlan]);
+  }, [selectedTable, selectedSeat, user, orderType, toast, handleBackToFloorPlan]);
 
   // Animation variants
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { when: "beforeChildren", staggerChildren: 0.1 } }, exit: { opacity: 0, transition: { when: "afterChildren" } } };
@@ -300,15 +354,20 @@ export default function ServerPage() {
                           <motion.div key={order.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3, delay: index * 0.05, type: "spring", stiffness: 500, damping: 30 }}>
                             <div className="p-4 rounded-xl bg-gray-800/70 border border-gray-700/30 backdrop-blur-sm hover:bg-gray-800/90 transition-colors">
                               <div className="flex justify-between items-center mb-2">
-                                <div className="font-medium text-white">{order.table} {order.seat ? `(Seat ${order.seat})` : ''}</div>
-                                <Badge variant="outline" className={` ${order.statusClass === "status-new" ? "border-blue-500/30 text-blue-400 bg-blue-500/10" : ""} ${order.statusClass === "status-cooking" ? "border-amber-500/30 text-amber-400 bg-amber-500/10" : ""} ${order.statusClass === "status-ready" ? "border-teal-500/30 text-teal-400 bg-teal-500/10" : ""} `}>
-                                  {order.status}
+                                <div className="font-medium text-white">Table {order.table} {order.seat ? `(Seat ${order.seat})` : ''}</div>
+                                <Badge variant="outline" className={`status-badge status-${order.status}`}>
+                                  {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ')}
                                 </Badge>
                               </div>
                               <div className="space-y-1 mb-2">
-                                {order.items.map((item: string, i: number) => ( <div key={i} className="text-sm text-gray-300"> • {item} </div> ))}
+                                {order.items.map((item, i) => (
+                                  <div key={i} className="text-sm text-gray-300">• {item}</div>
+                                ))}
                               </div>
-                              <div className="text-xs text-gray-500 flex items-center gap-1"> <Clock className="h-3 w-3" /> {order.time} • {order.id} </div>
+                              <div className="text-xs text-gray-500 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {order.id}
+                              </div>
                             </div>
                           </motion.div>
                         ))}

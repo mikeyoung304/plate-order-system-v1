@@ -31,7 +31,6 @@ const RECTANGLE_TABLE_DEFAULTS = {
   floor_plan_id: 'default'
 };
 
-<<<<<<< HEAD
 // Grid layout configuration
 const GRID_CONFIG = {
   startX: 100,
@@ -41,8 +40,6 @@ const GRID_CONFIG = {
   tablesPerRow: 3
 };
 
-=======
->>>>>>> 70491df (Add tables and seats)
 export async function fetchTables(): Promise<Table[]> {
   const supabase = createClient();
   
@@ -76,7 +73,6 @@ export async function fetchTables(): Promise<Table[]> {
     return acc;
   }, {} as Record<string, number>);
 
-<<<<<<< HEAD
   // Transform tables to match mock data format with grid layout
   return tables.map((table, index): Table => {
     const defaults = table.type === 'circle' ? CIRCLE_TABLE_DEFAULTS : RECTANGLE_TABLE_DEFAULTS;
@@ -92,36 +88,13 @@ export async function fetchTables(): Promise<Table[]> {
     // Add extra spacing for rectangle tables since they're wider
     const extraSpacing = table.type === 'rectangle' ? 30 : 0;
     
-=======
-  // Transform tables to match mock data format
-  return tables.map((table): Table => {
-    const defaults = table.type === 'circle' ? CIRCLE_TABLE_DEFAULTS : RECTANGLE_TABLE_DEFAULTS;
-    
-    // For circle tables, adjust x position based on label to match mock layout
-    let x = 100, y = 100;
-    
-    if (table.type === 'circle') {
-      x = 100 + ((table.label - 1) % 3) * 150;
-      y = 100 + Math.floor((table.label - 1) / 3) * 150;
-    }
-    // For rectangle tables, adjust dimensions and position
-    else {
-      x = 100 + ((table.label - 4) % 2) * 200;
-      y = 250 + Math.floor((table.label - 4) / 2) * 150;
-    }
-
->>>>>>> 70491df (Add tables and seats)
     return {
       id: table.id,
       label: table.label.toString(),
       status: table.status as "available" | "occupied" | "reserved",
       type: table.type as "circle" | "rectangle" | "square",
       seats: seatCountMap[table.id] || 0,
-<<<<<<< HEAD
       x: x + extraSpacing,
-=======
-      x,
->>>>>>> 70491df (Add tables and seats)
       y,
       ...defaults
     };

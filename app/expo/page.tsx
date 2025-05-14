@@ -11,139 +11,110 @@ import { Clock, CheckCircle, AlertCircle, ChefHat, Utensils } from "lucide-react
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { motion, AnimatePresence } from "framer-motion"
-
-type Order = {
-  id: string
-  table: string
-  seat: number
-  items: {
-    id: string
-    name: string
-    modifiers: string[]
-    status: "new" | "cooking" | "ready" | "delayed"
-  }[]
-  status: "new" | "cooking" | "ready" | "delayed" | "delivered"
-  timeReady?: string
-  timeReceived: string
-  startTime: number
-  server?: string
-  type?: string
-}
+import { fetchRecentOrders, subscribeToOrders, type Order } from "@/lib/orders"
+import { createClient } from "@/lib/supabase/client"
 
 export default function ExpoPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
-  // Load orders from localStorage with more frequent polling
+  // Load orders from Supabase
   useEffect(() => {
-    setIsLoading(true)
-
-    const loadOrders = () => {
+    const loadOrders = async () => {
       try {
-        const savedOrdersJSON = localStorage.getItem("pendingOrders")
-        if (savedOrdersJSON) {
-          const savedOrders = JSON.parse(savedOrdersJSON)
-          console.log("Loaded orders from localStorage:", savedOrders)
-          setOrders(savedOrders)
-        } else {
-          console.log("No orders found in localStorage")
-          setOrders([])
-        }
+        setIsLoading(true)
+        const fetchedOrders = await fetchRecentOrders(50)
+        setOrders(fetchedOrders)
       } catch (error) {
         console.error("Error loading orders:", error)
-        setOrders([])
+        toast({
+          title: "Error",
+          description: "Failed to load orders. Please refresh the page.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
-    // Initial load
     loadOrders()
+  }, [toast])
 
-    // Set up interval to check for new orders more frequently (every 2 seconds)
-    const intervalId = setInterval(loadOrders, 2000)
+  // Subscribe to real-time order updates
+  useEffect(() => {
+    const unsubscribe = subscribeToOrders(
+      (order) => {
+        setOrders(prev => {
+          // If the order already exists, update it
+          const exists = prev.some(o => o.id === order.id);
+          if (exists) {
+            return prev.map(o => o.id === order.id ? order : o);
+          }
+          // Otherwise, add it to the beginning and maintain limit
+          return [order, ...prev].slice(0, 50);
+        });
+      },
+      (error) => {
+        console.error('Subscription error:', error);
+        toast({ 
+          title: 'Connection Error', 
+          description: 'Lost connection to order updates. Please refresh.', 
+          variant: 'destructive' 
+        });
+      }
+    );
 
-    return () => clearInterval(intervalId)
-  }, [])
+    return () => {
+      unsubscribe();
+    };
+  }, [toast]);
 
   // Mark order as delivered
-  const markAsDelivered = (orderId: string) => {
-    // Update local state
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          return { ...order, status: "delivered" as const }
-        }
-        return order
-      }),
-    )
-
-    // Update localStorage
+  const markAsDelivered = async (orderId: string) => {
     try {
-      const savedOrdersJSON = localStorage.getItem("pendingOrders")
-      if (savedOrdersJSON) {
-        const savedOrders = JSON.parse(savedOrdersJSON)
-        const updatedOrders = savedOrders.map((order: any) => {
-          if (order.id === orderId) {
-            return { ...order, status: "delivered" }
-          }
-          return order
-        })
-        localStorage.setItem("pendingOrders", JSON.stringify(updatedOrders))
-        console.log("Order marked as delivered in localStorage:", updatedOrders)
-      }
-    } catch (error) {
-      console.error("Error updating orders in localStorage:", error)
-    }
+      // Optimistically update the UI
+      setOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { ...order, status: 'delivered' as const }
+          : order
+      ));
 
-    // Show toast notification
-    toast({
-      title: "Order delivered",
-      description: `Order ${orderId} has been marked as delivered`,
-      duration: 2000,
-    })
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'delivered' })
+        .eq('id', orderId);
+
+      if (error) {
+        // Revert the optimistic update if there's an error
+        setOrders(prev => prev.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'ready' as const }
+            : order
+        ));
+        throw error;
+      }
+
+      // Show toast notification
+      toast({
+        title: "Order delivered",
+        description: `Order ${orderId} has been marked as delivered`,
+        duration: 2000,
+      })
+    } catch (error) {
+      console.error("Error marking order as delivered:", error)
+      toast({
+        title: "Error",
+        description: "Failed to mark order as delivered",
+        variant: "destructive",
+      })
+    }
   }
 
-  // Handle double-click to remove order
-  const handleDoubleClick = (orderId: string) => {
-    // Remove from local state
-    setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId))
-
-    // Remove from localStorage
-    try {
-      const savedOrdersJSON = localStorage.getItem("pendingOrders")
-      if (savedOrdersJSON) {
-        const savedOrders = JSON.parse(savedOrdersJSON)
-        const updatedOrders = savedOrders.filter((order: any) => order.id !== orderId)
-        localStorage.setItem("pendingOrders", JSON.stringify(updatedOrders))
-        console.log("Order removed from localStorage:", updatedOrders)
-      }
-    } catch (error) {
-      console.error("Error removing order from localStorage:", error)
-    }
-
-    // Show toast notification
-    toast({
-      title: "Order completed",
-      description: `Order ${orderId} has been completed and removed`,
-      duration: 2000,
-    })
-  }
-
-  // Filter orders by status - improved logic for ready orders
-  const readyOrders = orders.filter((order) => {
-    // Check if the order status is ready OR if any items are ready
-    return order.status === "ready" || order.items.some((item) => item.status === "ready")
-  })
-
-  // Also update the in-progress orders filter to avoid showing ready orders there
-  const inProgressOrders = orders.filter((order) => {
-    // Only show orders that are not delivered and not completely ready
-    return (
-      order.status !== "delivered" && order.status !== "ready" && !order.items.every((item) => item.status === "ready")
-    )
-  })
+  // Filter orders by status
+  const readyOrders = orders.filter((order) => order.status === "ready")
+  const inProgressOrders = orders.filter((order) => order.status === "in_progress")
 
   return (
     <Shell>
@@ -179,7 +150,7 @@ export default function ExpoPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                <AnimatePresence>
+                <AnimatePresence mode="popLayout">
                   {readyOrders.map((order) => (
                     <motion.div
                       key={order.id}
@@ -187,6 +158,7 @@ export default function ExpoPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.3 }}
+                      layout
                     >
                       <Card
                         key={order.id}
@@ -194,7 +166,6 @@ export default function ExpoPage() {
                         style={{
                           animation: "pulse-green 2s infinite",
                         }}
-                        onDoubleClick={() => handleDoubleClick(order.id)}
                       >
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <div className="space-y-1">
@@ -205,35 +176,29 @@ export default function ExpoPage() {
                               </Badge>
                             </div>
                             <CardDescription>
-                              Order {order.id} • Server: {order.server || "Unknown"}
+                              Order {order.id}
                             </CardDescription>
                           </div>
                           <div className="flex items-center gap-1 text-sm font-medium">
                             <Clock className="h-4 w-4 text-muted-foreground" />
-                            {order.timeReady || "Just now"}
+                            {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </CardHeader>
 
                         <CardContent>
                           <ScrollArea className="h-[180px] pr-4">
                             <ul className="space-y-2">
-                              {order.items
-                                .filter((item) => item.status === "ready")
-                                .map((item, index) => (
-                                  <li key={index} className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                      <p className="font-medium">{item.name}</p>
-                                    </div>
-                                    {item.modifiers && item.modifiers.length > 0 && (
-                                      <p className="text-sm text-muted-foreground ml-4">{item.modifiers.join(", ")}</p>
-                                    )}
-
-                                    {index < order.items.filter((item) => item.status === "ready").length - 1 && (
-                                      <Separator className="mt-2" />
-                                    )}
-                                  </li>
-                                ))}
+                              {order.items.map((item, index) => (
+                                <li key={index} className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    <p className="font-medium">{item}</p>
+                                  </div>
+                                  {index < order.items.length - 1 && (
+                                    <Separator className="mt-2" />
+                                  )}
+                                </li>
+                              ))}
                             </ul>
                           </ScrollArea>
                         </CardContent>
@@ -291,17 +256,17 @@ export default function ExpoPage() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <CardTitle>{order.table}</CardTitle>
-                          <Badge variant="outline" className="text-xs">
-                            Seat {order.seat}
+                          <Badge variant="outline" className={`status-badge status-${order.status}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' ')}
                           </Badge>
                         </div>
                         <CardDescription>
-                          Order {order.id} • Server: {order.server || "Unknown"}
+                          Order {order.id}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-1 text-sm font-medium">
                         <ChefHat className="h-4 w-4 text-muted-foreground" />
-                        {order.status === "cooking" ? "Cooking" : order.status === "delayed" ? "Delayed" : "Waiting"}
+                        In Progress
                       </div>
                     </CardHeader>
 
@@ -311,23 +276,9 @@ export default function ExpoPage() {
                           {order.items.map((item, index) => (
                             <li key={index} className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <div
-                                  className={`w-2 h-2 rounded-full ${
-                                    item.status === "new"
-                                      ? "bg-white"
-                                      : item.status === "cooking"
-                                        ? "bg-amber-500"
-                                        : item.status === "ready"
-                                          ? "bg-emerald-500"
-                                          : "bg-red-500"
-                                  }`}
-                                />
-                                <p className="font-medium">{item.name}</p>
+                                <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                <p className="font-medium">{item}</p>
                               </div>
-                              {item.modifiers && item.modifiers.length > 0 && (
-                                <p className="text-sm text-muted-foreground ml-4">{item.modifiers.join(", ")}</p>
-                              )}
-
                               {index < order.items.length - 1 && <Separator className="mt-2" />}
                             </li>
                           ))}
@@ -337,17 +288,8 @@ export default function ExpoPage() {
 
                     <CardFooter>
                       <div className="w-full py-2 bg-secondary/50 text-muted-foreground rounded-md text-center flex items-center justify-center gap-2">
-                        {order.status === "delayed" ? (
-                          <>
-                            <AlertCircle className="h-4 w-4 text-red-400" />
-                            <span className="text-red-400">Delayed in Kitchen</span>
-                          </>
-                        ) : (
-                          <>
-                            <Utensils className="h-4 w-4" />
-                            Waiting for Kitchen
-                          </>
-                        )}
+                        <Utensils className="h-4 w-4" />
+                        Being Prepared
                       </div>
                     </CardFooter>
                   </Card>

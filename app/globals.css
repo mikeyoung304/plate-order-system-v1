@@ -73,7 +73,7 @@
     @apply bg-white/20 text-white border-white/30;
   }
 
-  .status-cooking {
+  .status-in_progress, .status-in-progress {
     @apply bg-amber-500/20 text-amber-400 border-amber-500/30;
   }
 
@@ -146,7 +146,7 @@
     @apply border-white;
   }
 
-  .kds-order-cooking {
+  .kds-order-in_progress, .kds-order-in-progress {
     @apply border-amber-500;
   }
 
@@ -353,7 +353,7 @@
     color: white;
   }
 
-  .status-badge.status-cooking {
+  .status-badge.status-in_progress, .status-badge.status-in-progress {
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(194, 65, 12, 0.1) 100%);
     border: 1px solid rgba(245, 158, 11, 0.3);
     color: rgb(245, 158, 11);
