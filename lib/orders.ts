@@ -1,5 +1,4 @@
-import { createClient } from './supabase/client';
-import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { supabase } from './supabase/client';
 
 interface OrderRow {
   id: string;
@@ -26,8 +25,6 @@ export interface Order extends OrderRow {
 }
 
 export async function fetchRecentOrders(limit = 5): Promise<Order[]> {
-  const supabase = createClient();
-  
   const { data, error } = await supabase
     .from('orders')
     .select(`
@@ -43,7 +40,7 @@ export async function fetchRecentOrders(limit = 5): Promise<Order[]> {
     throw error;
   }
 
-  return data.map(order => ({
+  return data.map((order: OrderRow) => ({
     ...order,
     table: `Table ${order.tables.label}`,
     seat: order.seats.label,
@@ -60,8 +57,6 @@ export async function createOrder(orderData: {
   transcript: string;
   type: 'food' | 'drink';
 }): Promise<Order> {
-  const supabase = createClient();
-  
   const { data, error } = await supabase
     .from('orders')
     .insert([
@@ -90,53 +85,14 @@ export async function createOrder(orderData: {
   } as Order;
 }
 
-export function subscribeToOrders(
-  callback: (order: Order) => void,
-  errorCallback: (error: any) => void
-) {
-  const supabase = createClient();
-  
-  const subscription = supabase
-    .channel('orders')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'orders'
-      },
-      async (payload: RealtimePostgresChangesPayload<OrderRow>) => {
-        if (!payload.new?.id) {
-          return;
-        }
+export async function updateOrderStatus(orderId: string, status: OrderRow['status']): Promise<void> {
+  const { error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('id', orderId);
 
-        // Fetch the complete order data with table and seat info
-        const { data, error } = await supabase
-          .from('orders')
-          .select(`
-            *,
-            tables!inner(label),
-            seats!inner(label)
-          `)
-          .eq('id', payload.new.id)
-          .single();
-
-        if (error) {
-          errorCallback(error);
-          return;
-        }
-
-        callback({
-          ...data,
-          table: `Table ${data.tables.label}`,
-          seat: data.seats.label,
-          items: data.items || []
-        } as Order);
-      }
-    )
-    .subscribe();
-
-  return () => {
-    subscription.unsubscribe();
-  };
-} 
+  if (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+}

@@ -11,8 +11,7 @@ import { Clock, CheckCircle, AlertCircle, ChefHat, Utensils } from "lucide-react
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { motion, AnimatePresence } from "framer-motion"
-import { fetchRecentOrders, type Order } from "@/lib/orders"
-import { createClient } from "@/lib/supabase/client"
+import { fetchRecentOrders, type Order, updateOrderStatus } from "@/lib/orders"
 
 export default function ExpoPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -51,21 +50,7 @@ export default function ExpoPage() {
           : order
       ));
 
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: 'delivered' })
-        .eq('id', orderId);
-
-      if (error) {
-        // Revert the optimistic update if there's an error
-        setOrders(prev => prev.map(order => 
-          order.id === orderId 
-            ? { ...order, status: 'ready' as const }
-            : order
-        ));
-        throw error;
-      }
+      await updateOrderStatus(orderId, 'delivered');
 
       // Show toast notification
       toast({

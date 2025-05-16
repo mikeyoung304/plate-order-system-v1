@@ -52,8 +52,6 @@ export function AuthForm() {
         })
       } else {
         await signIn(email, password)
-        router.push('/dashboard')
-        router.refresh()
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 

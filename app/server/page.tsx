@@ -17,7 +17,7 @@ import { Table } from "@/lib/floor-plan-utils"
 import { fetchTables } from "@/lib/tables"
 import { useAuth } from "@/lib/AuthContext"
 import { fetchRecentOrders, createOrder, type Order } from "@/lib/orders"
-import { createClient } from "@/lib/supabase/client"
+import { fetchSeatId } from "@/lib/seats"
 
 export default function ServerPage() {
   const [floorPlanId, setFloorPlanId] = useState("default") // Example ID
@@ -124,16 +124,10 @@ export default function ServerPage() {
       return;
     }
 
-    // Get the seat ID from the seats data in the tables response
-    const supabase = createClient();
-    const seatData = await supabase
-      .from('seats')
-      .select('id')
-      .eq('table_id', selectedTable.id)
-      .eq('label', selectedSeat)
-      .single();
-
-    if (seatData.error || !seatData.data) {
+    // Get the seat ID using the fetchSeatId function
+    const seatId = await fetchSeatId(selectedTable.id, selectedSeat);
+    
+    if (!seatId) {
       toast({ title: "Error", description: "Invalid seat selection.", variant: "destructive" });
       return;
     }
@@ -141,7 +135,7 @@ export default function ServerPage() {
     try {
       const orderData = {
         table_id: selectedTable.id,
-        seat_id: seatData.data.id,
+        seat_id: seatId,
         resident_id: user.id, // Temporarily using server as resident for testing
         server_id: user.id,
         items: orderText.split(",").map(item => item.trim()).filter(item => item),

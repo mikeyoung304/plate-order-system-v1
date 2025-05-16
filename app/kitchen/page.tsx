@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchRecentOrders, subscribeToOrders, type Order } from "@/lib/orders";
+import { fetchRecentOrders, type Order } from "@/lib/orders";
 
 export default function KitchenPage() {
   const [orders, setOrders] = useState<Order[]>([]);

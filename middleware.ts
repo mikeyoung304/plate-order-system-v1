@@ -39,12 +39,14 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/signup', '/auth/callback']
-  if (publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+  const pathname = request.nextUrl.pathname
+  
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return response
   }
 
   // API routes are handled separately
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     return response
   }
 
@@ -52,6 +54,36 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // Check role-specific access for protected routes
+  // A more robust version would pull this from a central config
+  if (pathname.startsWith('/server') || pathname.startsWith('/kitchen')) {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+        
+      if (error || !data) {
+        console.error('Error fetching user role:', error)
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+      
+      // Validate role access to server routes
+      if (pathname.startsWith('/server') && data.role !== 'server') {
+        return NextResponse.redirect(new URL('/dashboard', request.url)) 
+      }
+      
+      // Validate role access to kitchen routes
+      if (pathname.startsWith('/kitchen') && data.role !== 'cook') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    } catch (error) {
+      console.error('Role validation error:', error)
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   return response
