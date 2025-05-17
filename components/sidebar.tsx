@@ -50,7 +50,7 @@ export function Sidebar() {
   const [notifications, setNotifications] = useState(3)
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const { user, signOut, userRole } = useAuth()
+  const { user, signOut, userRole, userName } = useAuth()
   const { toast } = useToast()
 
   // Reset mobile menu state when screen size changes
@@ -156,10 +156,10 @@ export function Sidebar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarFallback>{user?.user_metadata?.full_name?.[0] || 'U'}</AvatarFallback>
+            <AvatarFallback>{userName?.[0] || 'U'}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium sf-pro-text">{user?.user_metadata?.full_name || 'User'}</p>
+            <p className="text-sm font-medium sf-pro-text">{userName || 'User'}</p>
             <p className="text-xs text-gray-400 sf-pro-text capitalize">{userRole || 'Loading...'}</p>
           </div>
         </div>
@@ -181,11 +181,11 @@ export function Sidebar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center min-w-0">
           <Avatar className="h-8 w-8 mr-2 flex-shrink-0">
-            <AvatarFallback>{user?.user_metadata?.full_name?.[0] || 'U'}</AvatarFallback>
+            <AvatarFallback>{userName?.[0] || 'U'}</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-medium sf-pro-text truncate">{user?.user_metadata?.full_name || 'User'}</p>
+              <p className="text-sm font-medium sf-pro-text truncate">{userName || 'User'}</p>
               <p className="text-xs text-gray-400 sf-pro-text capitalize">{userRole || 'Loading...'}</p>
             </div>
           )}

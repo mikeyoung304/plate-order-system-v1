@@ -12,6 +12,7 @@ type AuthContextType = {
   user: User | null
   loading: boolean
   userRole: string | null
+  userName: string | null
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string, role: AppRole) => Promise<void>
   signOut: () => Promise<void>
@@ -23,29 +24,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
+        .from('profiles')
+        .select('role, name')
         .eq('user_id', userId)
         .single()
 
       if (error) {
-        console.error('Error fetching user role:', error)
+        console.error('Error fetching user profile:', error)
         return null
       }
 
       if (data) {
         setUserRole(data.role)
-        return data.role
+        setUserName(data.name)
+        return data
       }
       return null
     } catch (error) {
-      console.error('Error fetching user role:', error)
+      console.error('Error fetching user profile:', error)
       return null
     }
   }
@@ -81,8 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession()
         setUser(session?.user || null)
         if (session?.user) {
-          const role = await fetchUserRole(session.user.id)
-          handleRoleBasedRedirection(role)
+          await fetchUserProfile(session.user.id)
         }
       } catch (error) {
         console.error('Error loading user:', error)
@@ -101,10 +103,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Use setTimeout to avoid Supabase deadlock
       setTimeout(async () => {
         if (event === 'SIGNED_IN' && session?.user) {
-          const role = await fetchUserRole(session.user.id)
-          handleRoleBasedRedirection(role)
+          const profile = await fetchUserProfile(session.user.id)
+          handleRoleBasedRedirection(profile?.role)
         } else if (event === 'SIGNED_OUT') {
           setUserRole(null)
+          setUserName(null)
           router.push('/')
         }
       }, 0)
@@ -121,13 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, name: string, role: AppRole) => {
-    // Sign up the user with metadata including role
+    // Sign up the user with metadata including role and name
     const { error: signUpError, data } = await supabase.auth.signUp({ 
       email, 
       password,
       options: {
         data: {
-          full_name: name,
+          name: name,
           role: role // This will be used by the trigger to set the user's role
         }
       }
@@ -157,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear local state
       setUser(null);
       setUserRole(null);
+      setUserName(null);
       
       // Force page refresh to ensure everything is cleared
       window.location.href = '/';
@@ -169,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, userRole, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, userRole, userName, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   )

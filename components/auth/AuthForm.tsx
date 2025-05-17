@@ -75,11 +75,11 @@ export function AuthForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {isSignUp && (
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Enter your full name"
+              placeholder="Enter your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required

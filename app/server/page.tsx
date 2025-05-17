@@ -10,7 +10,7 @@ import { FloorPlanView } from "@/components/floor-plan-view"
 import { VoiceOrderPanel } from "@/components/voice-order-panel"
 import { SeatPickerOverlay } from "@/components/seat-picker-overlay"
 import { useToast } from "@/hooks/use-toast"
-import { ChevronLeft, Utensils, Coffee, Info, Clock, History } from "lucide-react"
+import { ChevronLeft, Utensils, Coffee, Info, Clock, History, User } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion, AnimatePresence } from "framer-motion"
 import { Table } from "@/lib/floor-plan-utils"
@@ -18,6 +18,15 @@ import { fetchTables } from "@/lib/tables"
 import { useAuth } from "@/lib/AuthContext"
 import { fetchRecentOrders, createOrder, type Order } from "@/lib/orders"
 import { fetchSeatId } from "@/lib/seats"
+import { getAllResidents, type User as Resident } from "@/lib/users"
+import { getOrderSuggestions } from "@/lib/suggestions"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Add type definition for OrderSuggestion
+type OrderSuggestion = {
+  items: string[]
+  frequency: number
+}
 
 export default function ServerPage() {
   const [floorPlanId, setFloorPlanId] = useState("default") // Example ID
@@ -31,6 +40,10 @@ export default function ServerPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
+  const [residents, setResidents] = useState<Resident[]>([])
+  const [selectedResident, setSelectedResident] = useState<string | null>(null)
+  const [orderSuggestions, setOrderSuggestions] = useState<OrderSuggestion[]>([])
+  const [selectedSuggestion, setSelectedSuggestion] = useState<OrderSuggestion | null>(null)
 
   // Fetch tables from Supabase
   useEffect(() => {
@@ -79,6 +92,40 @@ export default function ServerPage() {
     loadOrders();
   }, [toast]);
 
+  // Load residents
+  useEffect(() => {
+    const loadResidents = async () => {
+      try {
+        const fetchedResidents = await getAllResidents();
+        setResidents(fetchedResidents);
+      } catch (error) {
+        console.error('Error loading residents:', error);
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to load residents', 
+          variant: 'destructive' 
+        });
+      }
+    };
+
+    loadResidents();
+  }, [toast]);
+
+  // Load suggestions
+  const loadSuggestions = useCallback(async (residentId: string) => {
+    try {
+      const suggestions = await getOrderSuggestions(residentId, orderType || 'food');
+      setOrderSuggestions(suggestions);
+    } catch (error) {
+      console.error('Error loading suggestions:', error);
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to load suggestions', 
+        variant: 'destructive' 
+      });
+    }
+  }, [orderType, toast]);
+
   // --- Navigation and Selection Handlers ---
 
   const handleSelectTable = (table: Table) => {
@@ -114,13 +161,16 @@ export default function ServerPage() {
 
   // Go back from Voice Order to Order Type selection
   const handleBackFromVoiceOrder = () => {
-    setOrderType(null); // Go back to order type selection
+    setSelectedResident(null);
+    setOrderSuggestions([]);
+    setSelectedSuggestion(null);
+    setOrderType(null);
   };
 
   // Called by VoiceOrderPanel upon successful transcription
   const handleOrderSubmitted = useCallback(async (orderText: string) => {
-    if (!selectedTable || selectedSeat == null || !user) {
-      toast({ title: "Error", description: "Table or seat not selected.", variant: "destructive" });
+    if (!selectedTable || selectedSeat == null || !user || !selectedResident) {
+      toast({ title: "Error", description: "Missing required information.", variant: "destructive" });
       return;
     }
 
@@ -136,10 +186,12 @@ export default function ServerPage() {
       const orderData = {
         table_id: selectedTable.id,
         seat_id: seatId,
-        resident_id: user.id, // Temporarily using server as resident for testing
+        resident_id: selectedResident,
         server_id: user.id,
-        items: orderText.split(",").map(item => item.trim()).filter(item => item),
-        transcript: orderText,
+        items: selectedSuggestion 
+          ? selectedSuggestion.items
+          : orderText.split(",").map(item => item.trim()).filter(item => item),
+        transcript: selectedSuggestion ? orderText : orderText,
         type: orderType || 'food'
       };
 
@@ -160,7 +212,35 @@ export default function ServerPage() {
         variant: 'destructive' 
       });
     }
-  }, [selectedTable, selectedSeat, user, orderType, toast, handleBackToFloorPlan]);
+  }, [selectedTable, selectedSeat, user, selectedResident, selectedSuggestion, orderType, toast, handleBackToFloorPlan]);
+
+  // Resident selection handler
+  const handleResidentSelected = useCallback((residentId: string) => {
+    setSelectedResident(residentId);
+    loadSuggestions(residentId);
+  }, [loadSuggestions]);
+
+  // Suggestion selection handler
+  const handleSuggestionSelected = (suggestion: OrderSuggestion) => {
+    if (selectedSuggestion === suggestion) {
+      // If clicking the same suggestion, unselect it
+      setSelectedSuggestion(null);
+    } else {
+      // Otherwise select the new suggestion
+      setSelectedSuggestion(suggestion);
+    }
+  };
+
+  // Proceed to voice order handler
+  const handleProceedToVoiceOrder = () => {
+    if (selectedSuggestion) {
+      // If a suggestion is selected, submit it with the items joined as text
+      handleOrderSubmitted(selectedSuggestion.items.join(", "));
+    } else {
+      // If no suggestion selected, set view to voiceOrder
+      currentView = 'voiceOrder';
+    }
+  };
 
   // Animation variants
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { when: "beforeChildren", staggerChildren: 0.1 } }, exit: { opacity: 0, transition: { when: "afterChildren" } } };
@@ -170,8 +250,12 @@ export default function ServerPage() {
   let currentView = 'floorPlan';
   if (selectedSeat && !orderType) {
     currentView = 'orderType';
-  } else if (selectedSeat && orderType) {
-    currentView = 'voiceOrder';
+  } else if (selectedSeat && orderType && !selectedResident) {
+    currentView = 'residentSelect';
+  } else if (selectedSeat && orderType && selectedResident && !selectedSuggestion) {
+    currentView = 'residentSelect';
+  } else if (selectedSeat && orderType && selectedResident && selectedSuggestion) {
+    currentView = 'residentSelect';
   }
 
   return (
@@ -250,6 +334,105 @@ export default function ServerPage() {
                             </Button>
                           </motion.div>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* Resident Selection View */}
+              {currentView === 'residentSelect' && selectedTable && selectedSeat && orderType && (
+                <motion.div key="resident-select" variants={itemVariants} initial="hidden" animate="visible" exit="exit">
+                  <Card className="bg-gray-800/40 border-gray-700/30 backdrop-blur-sm overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="p-6 border-b border-gray-700/30 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-purple-500/20 text-purple-400`}>
+                            <User className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-medium text-white flex items-center gap-2">
+                              Select Resident
+                              <Badge variant="outline" className="ml-2 text-xs font-normal"> Table {selectedTable.label}, Seat {selectedSeat} </Badge>
+                            </h2>
+                            <p className="text-gray-400 text-sm mt-1">Choose a resident and view their order suggestions</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={handleBackFromVoiceOrder} className="h-9 gap-1 text-gray-300 hover:text-white hover:bg-gray-700/50">
+                          <ChevronLeft className="h-4 w-4" /> Back
+                        </Button>
+                      </div>
+                      <div className="p-6 space-y-6">
+                        <div className="space-y-4">
+                          <label className="text-sm font-medium text-gray-200">Select Resident</label>
+                          <Select onValueChange={handleResidentSelected}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Choose a resident" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {residents.map((resident) => (
+                                <SelectItem key={resident.id} value={resident.id}>
+                                  {resident.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {selectedResident && (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <label className="text-sm font-medium text-gray-200">Previous Orders</label>
+                              {orderSuggestions.length > 0 && (
+                                <span className="text-xs text-gray-400">Optional - Select a previous order or place a new one</span>
+                              )}
+                            </div>
+                            
+                            {orderSuggestions.length > 0 ? (
+                              <div className="space-y-3">
+                                {orderSuggestions.map((suggestion, index) => (
+                                  <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                  >
+                                    <Button
+                                      variant="outline"
+                                      className={`w-full justify-start text-left p-4 h-auto ${
+                                        selectedSuggestion === suggestion ? 'border-teal-500' : 'border-gray-700'
+                                      }`}
+                                      onClick={() => handleSuggestionSelected(suggestion)}
+                                    >
+                                      <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-medium">Order #{index + 1}</span>
+                                          <Badge variant="secondary">Ordered {suggestion.frequency}x</Badge>
+                                        </div>
+                                        {suggestion.items.map((item, i) => (
+                                          <div key={i} className="text-sm text-gray-400">• {item}</div>
+                                        ))}
+                                      </div>
+                                    </Button>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 text-gray-400">
+                                <Info className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                <p>No previous orders found</p>
+                              </div>
+                            )}
+
+                            <Button
+                              className="w-full mt-4"
+                              size="lg"
+                              onClick={handleProceedToVoiceOrder}
+                            >
+                              {selectedSuggestion ? 'Place Selected Order' : 'Place New Voice Order'}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
